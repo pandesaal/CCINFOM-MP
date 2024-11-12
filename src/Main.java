@@ -1,24 +1,42 @@
 import java.sql.*;
+import java.util.InputMismatchException;
 
 public class Main {
-    public static void main(String[] args) {
-        try {
-            Connection connection = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306/s17_group8",
-                    "root", //username of db
-                    "password"); //password of db
 
-            Statement statement = connection.createStatement();
+    public static void main(String[] args) throws SQLException {
 
-            String query = "SELECT * FROM inventory"; //write sql statements as normal
-            ResultSet resultSet = statement.executeQuery(query);
+        RestaurantSystem system = new RestaurantSystem();
+        boolean programRun = true;
+        boolean inputRun = true;
 
-            while (resultSet.next()){
-                System.out.println(resultSet.getString("product_id"));
+        while (programRun){
+            System.out.println("Restaurant Management System");
+            System.out.println("[1] Start Connection");
+            System.out.println("[2] Exit Program");
+
+            inputRun = true;
+            while (inputRun) {
+                try {
+                    int choice = Utilities.getUserInput();
+
+                    switch (choice) {
+                        case 1:
+                            inputRun = false;
+                            system.showReportsMenu();
+                            break;
+                        case 2:
+                            inputRun = false;
+                            programRun = false;
+                            System.out.println("Exiting program...");
+                            break;
+                        default:
+                            throw new InputMismatchException("Invalid input.");
+                    }
+                } catch (InputMismatchException e) {
+                    System.out.println(e.getMessage());
+                }
             }
-        } catch (SQLException e) {
-            System.out.println("Check if your setup for root and password are the same on your pc, change accordingly and run again.");
-            // TODO: change to user inputs
         }
+
     }
 }
