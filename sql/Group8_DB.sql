@@ -1,8 +1,8 @@
 CREATE DATABASE IF NOT EXISTS `s17_group8`;
 USE `s17_group8`;
 
-DROP TABLE IF EXISTS inventory;
-CREATE TABLE IF NOT EXISTS inventory (
+DROP TABLE IF EXISTS Inventory;
+CREATE TABLE IF NOT EXISTS Inventory (
     product_id INT AUTO_INCREMENT PRIMARY KEY,
     product_name VARCHAR(255) NOT NULL,
     category VARCHAR(255) NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS inventory (
     CHECK (category IN ('Main Course', 'Desserts', 'Beverages', 'Sides'))
 );
 
-INSERT INTO inventory (product_name, category, price, quantity) 
+INSERT INTO Inventory (product_name, category, price, quantity) 
 VALUES 	('Pork Sinigang', 'Main Course', 250.00, 50),
 		('Kare-kare', 'Main Course', 350.00, 50),
 		('Chicken Adobo', 'Main Course', 220.00, 50),
