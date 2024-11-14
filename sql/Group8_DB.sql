@@ -48,12 +48,14 @@ CREATE TABLE IF NOT EXISTS Roles (
 
 CREATE TABLE IF NOT EXISTS TimeShift (
     time_shiftid INT AUTO_INCREMENT PRIMARY KEY,
-    shift_type VARCHAR(20) NOT NULL
+    shift_type VARCHAR(20) NOT NULL,
+    time_start TIME NOT NULL,
+    time_end TIME NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Employee (
     employee_id INT AUTO_INCREMENT PRIMARY KEY,
-	first_name VARCHAR(50) NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     role_id INT NOT NULL,
     time_shiftid INT NOT NULL,
@@ -68,10 +70,13 @@ INSERT INTO Roles (role_name) VALUES
 ('Manager'),
 ('Cashier');
 
-INSERT INTO TimeShift (shift_type) VALUES
-('Morning'),
-('Afternoon'),
-('Night');
+INSERT INTO TimeShift (shift_type, time_start, time_end) VALUES
+--MORNING 4am to 12noon
+--AFTERNOON 12noon to 8pm
+--NIGHT 8pm to 4am
+('Morning', '04:00:00', '12:00:00'), 
+('Afternoon', '12:00:00', '20:00:00'),
+('Night', '20:00:00', '04:00:00');
 
 INSERT INTO Employee (first_name, last_name, role_id, time_shiftid) VALUES
 ('John', 'Wick', 1, 1),
