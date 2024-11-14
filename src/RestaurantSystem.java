@@ -77,7 +77,9 @@ public class RestaurantSystem {
 
     }
 
-    public void showEmployeeShiftReport() {
+    public void showEmployeeShiftReport() {    
+    //TODO: Number of shifts per employee and total hours worked within a given year and month.
+
 
     }
 
