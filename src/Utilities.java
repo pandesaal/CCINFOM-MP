@@ -1,20 +1,23 @@
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
 
 public class Utilities {
 
     static Scanner sc = new Scanner(System.in);
+    public static final int DBSELECT = 1;
+    public static final int DBINSERT = 2;
 
     public static Connection setupConnection(){
 
         Connection connection = null;
         while (connection == null){
-            System.out.print("URL (MySQLWorkbench > Home > MySQL Connections > Connection where you loaded the DB in (has branches icon)): ");
+            System.out.print("Connection URL: ");
             String url = sc.nextLine().trim();
 
-            System.out.print("Username (MySQLWorkbench > Home > MySQL Connections > Username where you loaded the DB in (has person icon)): ");
+            System.out.print("Username: ");
             String root = sc.nextLine().trim();
 
             System.out.print("Password: ");
@@ -47,5 +50,15 @@ public class Utilities {
             }
         }
         return choice;
+    }
+
+    public static ResultSet executeQuery(int action){
+
+        if (action == DBSELECT){
+
+        }
+
+        ResultSet resultSet;
+        return resultSet;
     }
 }

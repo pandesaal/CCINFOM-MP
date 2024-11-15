@@ -12,15 +12,18 @@ public class RestaurantSystem {
     Statement statement;
     ResultSet resultSet;
 
-    public RestaurantSystem() throws SQLException {
+    public RestaurantSystem() {
         connection = null;
     }
 
-    public void showReportsMenu() {
+    public void showReportsMenu() throws SQLException {
 
         // TODO: figure out how to troubleshoot queries
 
-        if (connection == null) connection = Utilities.setupConnection();
+        if (connection == null) {
+            connection = Utilities.setupConnection();
+            statement = connection.createStatement();
+        }
 
         boolean programRun = true;
         boolean inputRun = true;
@@ -70,7 +73,53 @@ public class RestaurantSystem {
     }
 
     public void showSalesReport() {
-        // TODO: Total sales, average sales, and top selling products per day for a given year and month
+        boolean programRun = true;
+        boolean inputRun = true;
+        String query = null;
+
+        while (programRun){
+            System.out.println("Sales Report");
+            System.out.println("[1] See Total Sales");
+            System.out.println("[2] See Average Sales");
+            System.out.println("[3] See Top Selling Products");
+            System.out.println("[4] See All 3 Options");
+            System.out.println("[5] Exit Sales Report Menu");
+
+            inputRun = true;
+            while (inputRun) {
+                try {
+                    int choice = Utilities.getUserInput();
+
+                    switch (choice) {
+                        case 1:
+                            inputRun = false;
+                            break;
+                        case 2:
+                            inputRun = false;
+                            break;
+                        case 3:
+                            inputRun = false;
+                            break;
+                        case 4:
+                            inputRun = false;
+                            break;
+                        case 5:
+                            inputRun = false;
+                            programRun = false;
+                            System.out.println("Exiting sales report menu...");
+                            break;
+                        default:
+                            throw new InputMismatchException("Invalid input.");
+                    }
+                } catch (InputMismatchException e) {
+                    System.out.println(e.getMessage());
+                }
+            }
+
+            if (query != null) {
+                resultSet = statement.executeQuery(query);
+            }
+        }
     }
 
     public void showCustomerOrderReport() {
