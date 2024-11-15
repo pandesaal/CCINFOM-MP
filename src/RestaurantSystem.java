@@ -123,10 +123,55 @@ public class RestaurantSystem {
     }
 
     public void showCustomerOrderReport() {
+        if (connection == null) connection = Utilities.setupConnection();
+
+          String query = "SELECT c.customer_name, o.orderid, o.orderdatetime, p.product_name, oi.quantity, oi.total_price " + // not final will adjust accdg to final table
+               "FROM orders o " +
+               "JOIN customers c ON o.customerid = c.customerid " +
+               "JOIN order_items oi ON o.orderid = oi.orderid " +
+               "JOIN products p ON oi.productid = p.productid " +
+               "ORDER BY o.orderdatetime DESC";
+
+        try {
+    statement = connection.createStatement();
+    resultSet = statement.executeQuery(query);
+
+    System.out.println("Customer Order Report:");
+    System.out.println("-------------------------------------------------------------");
+    System.out.printf("%-20s %-10s %-15s %-20s %-8s %-10s\n", "Customer Name", "Order ID", "Order Date", "Product", "Quantity", "Total Price");
+    System.out.println("-------------------------------------------------------------");
+
+    while (resultSet.next()) {
+        String customerName = resultSet.getString("customer_name");
+        int orderId = resultSet.getInt("order_id");
+        Date orderDate = resultSet.getDate("order_date");
+        String productName = resultSet.getString("product_name");
+        int quantity = resultSet.getInt("quantity");
+        double totalPrice = resultSet.getDouble("total_price");
+
+        System.out.printf("%-20s %-10d %-15s %-20s %-8d %-10.2f\n",
+                customerName, orderId, orderDate.toString(), productName, quantity, totalPrice);
+    }
+
+//i chat gpted this part so idk if tama to
+} catch (SQLException e) {
+    System.out.println("Error fetching customer order report: " + e.getMessage());
+} finally {
+    try {
+        if (resultSet != null) resultSet.close();
+        if (statement != null) statement.close();
+    } catch (SQLException e) {
+        System.out.println("Error closing resources: " + e.getMessage());
+    }
+}
+
+        
 
     }
 
-    public void showEmployeeShiftReport() {
+    public void showEmployeeShiftReport() {    
+    //TODO: Number of shifts per employee and total hours worked within a given year and month.
+
 
     }
 
