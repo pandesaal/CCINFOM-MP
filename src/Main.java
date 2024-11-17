@@ -3,11 +3,16 @@ import java.util.InputMismatchException;
 
 public class Main {
 
-    public static void main(String[] args) throws SQLException {
+    // TODO: records management (SELECT items FROM specific_table)
+    // TODO: transactions (inserting items into tables)
+    // TODO: reports
 
-        RestaurantSystem system = new RestaurantSystem();
+    static Connection connection = null;
+
+    public static void main(String[] args) {
+
         boolean programRun = true;
-        boolean inputRun = true;
+        boolean inputRun;
 
         while (programRun){
             System.out.println("Restaurant Management System");
@@ -17,12 +22,12 @@ public class Main {
             inputRun = true;
             while (inputRun) {
                 try {
-                    int choice = Utilities.getUserInput();
+                    int choice = Utilities.getUserInput("Choice: ");
 
                     switch (choice) {
                         case 1:
                             inputRun = false;
-                            system.showReportsMenu();
+                            connectionsMenu();
                             break;
                         case 2:
                             inputRun = false;
@@ -38,5 +43,57 @@ public class Main {
             }
         }
 
+    }
+
+    private static void connectionsMenu() {
+        if (connection == null){
+            connection = Utilities.setupConnection();
+        }
+
+        RestaurantReports reports = new RestaurantReports(connection);
+        RestaurantTransactions transactions = new RestaurantTransactions(connection);
+        RestaurantRecordsMgt recordsMgt = new RestaurantRecordsMgt(connection);
+
+        boolean programRun = true;
+        boolean inputRun;
+
+        while (programRun){
+            System.out.println("Restaurant Management System");
+            System.out.println("[1] Records Management");
+            System.out.println("[2] Transactions");
+            System.out.println("[3] Reports");
+            System.out.println("[4] Exit Program");
+
+            inputRun = true;
+            while (inputRun) {
+                try {
+                    int choice = Utilities.getUserInput("Choice: ");
+
+                    switch (choice) {
+                        case 1:
+                            inputRun = false;
+                            recordsMgt.showMenu();
+                            break;
+                        case 2:
+                            inputRun = false;
+                            transactions.showMenu();
+                            break;
+                        case 3:
+                            inputRun = false;
+                            reports.showMenu();
+                            break;
+                        case 4:
+                            inputRun = false;
+                            programRun = false;
+                            System.out.println("Exiting to main menu...");
+                            break;
+                        default:
+                            throw new InputMismatchException("Invalid input.");
+                    }
+                } catch (InputMismatchException e) {
+                    System.out.println(e.getMessage());
+                }
+            }
+        }
     }
 }

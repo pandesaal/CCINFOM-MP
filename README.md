@@ -9,4 +9,6 @@
 - `sql/Group8_DB.sql`: MySQL loading file, import first before testing java app
 - `src/Main.java`: main java file, used for running program
 - `src/Utilities.java`: for storing helper functions (user input, parsers, etc)
-- `src/RestaurantSystem.java`: main logic, mostly displays atm (report functions to be filled out)
+- `src/RestaurantRecordsMgt.java`: logic for viewing items in tables
+- `src/RestaurantTransactions.java`: logic for adding/editing items in tables
+- `src/RestaurantReports.java`: logic for displaying time dated reports

@@ -1,15 +1,13 @@
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
 
 public class Utilities {
 
     static Scanner sc = new Scanner(System.in);
-    public static final int DBSELECT = 1;
-    public static final int DBINSERT = 2;
 
+    @SuppressWarnings("Nullability")
     public static Connection setupConnection(){
 
         Connection connection = null;
@@ -28,22 +26,23 @@ public class Utilities {
                         "jdbc:mysql://" + url + "/s17_group8",
                         root, //username of db
                         password); //password of db
+                System.out.println("Connection successful!\n");
 
             } catch (SQLException e) {
-                System.out.println("Check if your setup for root and password are the same on your pc, change accordingly and run again.");
+                System.out.println("Troubleshoot: check if connection is on or login credentials are correct.");
             }
         }
 
         return connection;
     }
 
-    public static int getUserInput() {
+    public static int getUserInput(String prompt) {
         int choice = -1;
         boolean validInput = false;
         while (!validInput) {
             try {
-                System.out.print("Choice: ");
-                choice = Integer.parseInt(sc.nextLine());
+                System.out.print(prompt);
+                choice = Integer.parseInt(sc.nextLine().trim());
                 validInput = true;
             } catch (NumberFormatException e) {
                 System.out.println("Invalid input.");
