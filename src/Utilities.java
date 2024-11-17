@@ -52,13 +52,4 @@ public class Utilities {
         return choice;
     }
 
-    public static ResultSet executeQuery(int action){
-
-        if (action == DBSELECT){
-
-        }
-
-        ResultSet resultSet;
-        return resultSet;
-    }
 }

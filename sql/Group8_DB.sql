@@ -35,10 +35,10 @@ VALUES 	('Pork Sinigang', 'Main Course', 250.00, 50),
 		('Mashed Potatoes', 'Sides', 70.00, 50),
 		('Garlic Fried Rice', 'Sides', 60.00, 50),
 		('Macaroni Salad', 'Sides', 50.00, 50);
-        
+
 DROP TABLE IF EXISTS Customers;
 CREATE TABLE IF NOT EXISTS Customers (
-    customerid INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT AUTO_INCREMENT PRIMARY KEY,
     lastname VARCHAR(50) NOT NULL,
     firstname VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL,
@@ -46,30 +46,13 @@ CREATE TABLE IF NOT EXISTS Customers (
     address VARCHAR(200) NOT NULL
 );
 
-INSERT INTO Customers (customerid, lastname, firstname, email, phonenumber, address) 
+INSERT INTO Customers (customer_id, lastname, firstname, email, phonenumber, address) 
 VALUES 
     (101, 'Smith', 'John', 'john.smith@example.com', '09171234567', '123 Main St, Cityville'),
     (102, 'Doe', 'Jane', 'jane.doe@example.com', '09171234568', '456 Oak St, Townsville'),
     (103, 'Roe', 'Richard', 'richard.roe@example.com', '09171234569', '789 Pine St, Villagetown'),
     (104, 'Taylor', 'Alex', 'alex.taylor@example.com', '09171234570', '101 Birch St, Foresthill'),
     (105, 'Brown', 'Emily', 'emily.brown@example.com', '09171234571', '202 Maple St, Lakeside');
-    
-DROP TABLE IF EXISTS Order_History;
-CREATE TABLE IF NOT EXISTS Order_History (
-    orderid INT NOT NULL,
-    customerid INT NOT NULL,
-    FOREIGN KEY (customerid) REFERENCES Customers(customerid),
-    FOREIGN KEY (orderid) REFERENCES Orders(order_id)
-);
-
-INSERT INTO Order_History (orderid, customerid) 
-VALUES 
-    (1, 101),
-    (2, 102),
-    (3, 103),
-    (4, 104),
-    (5, 105);
-
 
 DROP TABLE IF EXISTS Employee;
 DROP TABLE IF EXISTS Roles;
@@ -105,9 +88,9 @@ INSERT INTO Roles (role_name) VALUES
 ('Cashier');
 
 INSERT INTO TimeShift (shift_type, time_start, time_end) VALUES
---MORNING 4am to 12noon
---AFTERNOON 12noon to 8pm
---NIGHT 8pm to 4am
+-- MORNING 4am to 12noon
+-- AFTERNOON 12noon to 8pm
+-- NIGHT 8pm to 4am
 ('Morning', '04:00:00', '12:00:00'), 
 ('Afternoon', '12:00:00', '20:00:00'),
 ('Night', '20:00:00', '04:00:00');
@@ -250,4 +233,19 @@ VALUES
 -- Order 5: Takeout, Shift: Afternoon
     (5, 2),  -- Sabrina Carpenter (Chef)
     (5, 8);  -- Peter Parker (Waiter)
+    
+DROP TABLE IF EXISTS Order_History;
+CREATE TABLE IF NOT EXISTS Order_History (
+    orderid INT NOT NULL,
+    customerid INT NOT NULL,
+    FOREIGN KEY (customerid) REFERENCES Customers(customerid),
+    FOREIGN KEY (orderid) REFERENCES Orders(order_id)
+);
 
+INSERT INTO Order_History (orderid, customerid) 
+VALUES 
+    (1, 101),
+    (2, 102),
+    (3, 103),
+    (4, 104),
+    (5, 105);
