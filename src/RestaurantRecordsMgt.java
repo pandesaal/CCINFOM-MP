@@ -83,7 +83,7 @@ public class RestaurantRecordsMgt {
                         int id = Utilities.getUserInput("Product ID of item to view: ");
 
                         if (rows.contains(id)) {
-                            // fetches all orders that contain a product belonging to the inventory (tama ba)
+                            // fetches all orders that contain a product belonging to the inventory
                             query = """
                                     SELECT o.order_id, oi.quantity AS quantity_ordered,\s
                                            o.total_amount AS total_amount_of_order, o.order_datetime
@@ -95,7 +95,8 @@ public class RestaurantRecordsMgt {
                                    \s""";
 
                             try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
-                                detailStmt.setInt(1, id);
+                                detailStmt.setInt(1, id);     // 1 refers to the first ? in the query
+                                                              //  id is the value that will replace the placeholder (?) in the query
                                 try (ResultSet detailResult = detailStmt.executeQuery()) {
 
                                     System.out.println("\nOrder Details for Product ID: " + id);
@@ -103,6 +104,7 @@ public class RestaurantRecordsMgt {
                                     System.out.printf("%-10s %-15s %-15s %-15s %-20s\n", "Order ID", "Quantity", "Total Amount", "Order Date");
                                     System.out.println("-".repeat(100));
 
+                                    //  flag to check if any records exist for the given product ID
                                     boolean hasRecords = false;
 
                                     while (detailResult.next()) {
@@ -141,15 +143,15 @@ public class RestaurantRecordsMgt {
                                 }
                             }
 
-                        } else {
+                        } else {    // throws an exception if the id is not in the rows list
                             throw new InputMismatchException("Product ID not found.");
                         }
-                    } catch (InputMismatchException e) {
+                    } catch (InputMismatchException e) {     // catches invalid input exceptions and prompts the user to try again
                         System.out.println("Invalid input. Please try again.");
                     }
                 }
 
-            } catch (SQLException e) {
+            } catch (SQLException e) {   // handles SQL-related errors, such as invalid queries or database issues
                 System.out.println("Query error, edit MySQL database and try again.");
             }
         }
