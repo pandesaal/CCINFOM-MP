@@ -143,42 +143,41 @@ CREATE TABLE IF NOT EXISTS Order_Item (
     order_id INT NOT NULL,
     product_id INT NOT NULL,
     quantity INT DEFAULT 0 CHECK (quantity > 0),
-    price_per_unit DECIMAL(10, 2) NOT NULL CHECK (price_per_unit > 0),
     FOREIGN KEY (order_id) REFERENCES Orders(order_id),
     FOREIGN KEY (product_id) REFERENCES Inventory(product_id)
 );
 
-INSERT INTO Order_Item (order_id, product_id, quantity, price_per_unit)
+INSERT INTO Order_Item (order_id, product_id, quantity)
 VALUES
     -- Order 1
-    (1, 1, 1, 250.00),  -- Pork Sinigang: 1 * 250.00 = 250.00
-    (1, 19, 1, 40.00),  -- Steamed Rice: 1 * 40.00 = 40.00
-    (1, 9, 1, 120.00),  -- Halo-halo: 1 * 120.00 = 120.00
-    (1, 15, 1, 85.00),  -- Mango Shake: 1 * 85.00 = 85.00
+    (1, 1, 1),   -- Pork Sinigang: 1pc
+    (1, 19, 1),  -- Steamed Rice: 1pc
+    (1, 9, 1),   -- Halo-halo: 1pc
+    (1, 15, 1),  -- Mango Shake: 1pc
 
     -- Order 2
-    (2, 2, 1, 350.00),  -- Kare-kare: 1 * 350.00 = 350.00
-    (2, 20, 1, 70.00),  -- Mashed Potatoes: 1 * 70.00 = 70.00
-    (2, 10, 1, 90.00),  -- Leche Flan: 1 * 90.00 = 90.00
-    (2, 16, 1, 60.00),  -- Bottomless Iced Tea: 1 * 60.00 = 60.00
+    (2, 2, 1),   -- Kare-kare: 1
+    (2, 20, 1),  -- Mashed Potatoes: 1
+    (2, 10, 1),  -- Leche Flan: 1
+    (2, 16, 1),  -- Bottomless Iced Tea: 1
 
     -- Order 3
-    (3, 3, 1, 220.00),  -- Chicken Adobo: 1 * 220.00 = 220.00
-    (3, 21, 1, 60.00),  -- Garlic Fried Rice: 1 * 60.00 = 60.00
-    (3, 11, 1, 150.00), -- Dulce de Leche Cake: 1 * 150.00 = 150.00
-    (3, 18, 1, 50.00),  -- Sago't Gulaman: 1 * 50.00 = 50.00
+    (3, 3, 1),  -- Chicken Adobo: 1
+    (3, 21, 1),  -- Garlic Fried Rice: 1
+    (3, 11, 1), -- Dulce de Leche Cake: 1
+    (3, 18, 1),  -- Sago't Gulaman: 1
 
     -- Order 4
-    (4, 4, 1, 280.00),  -- Sisig: 1 * 280.00 = 280.00
-    (4, 22, 1, 50.00),  -- Macaroni Salad: 1 * 50.00 = 50.00
-    (4, 14, 1, 130.00), -- Buko Pandan: 1 * 130.00 = 130.00
-    (4, 17, 1, 70.00),  -- Buko Juice: 1 * 70.00 = 70.00
+    (4, 4, 1),   -- Sisig: 1
+    (4, 22, 1),  -- Macaroni Salad: 1
+    (4, 14, 1),  -- Buko Pandan: 1
+    (4, 17, 1),  -- Buko Juice: 1
 
     -- Order 5
-    (5, 5, 1, 190.00),  -- Burger Steak: 1 * 190.00 = 190.00
-    (5, 19, 1, 40.00),  -- Steamed Rice: 1 * 40.00 = 40.00
-    (5, 13, 1, 110.00), -- Peach Mango Pie: 1 * 110.00 = 110.00
-    (5, 15, 1, 85.00);  -- Mango Shake: 1 * 85.00 = 85.00
+    (5, 5, 1),   -- Burger Steak: 1
+    (5, 19, 1),  -- Steamed Rice: 1
+    (5, 13, 1),  -- Peach Mango Pie: 1
+    (5, 15, 1);  -- Mango Shake: 1
 
 
 CREATE TABLE IF NOT EXISTS Assigned_Employee_to_Order (
