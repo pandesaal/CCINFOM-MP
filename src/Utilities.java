@@ -12,7 +12,7 @@ public class Utilities {
 
         Connection connection = null;
         while (connection == null){
-            System.out.print("Connection URL: ");
+            System.out.print("Connection URL ('host':'portnumber'): ");
             String url = sc.nextLine().trim();
 
             System.out.print("Username: ");

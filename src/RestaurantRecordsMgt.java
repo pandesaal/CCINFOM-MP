@@ -1,30 +1,19 @@
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.*;
 
 public class RestaurantRecordsMgt {
     Connection connection;
-    Statement statement;
 
     public RestaurantRecordsMgt(Connection connection) {
         this.connection = connection;
-        try {
-            statement = connection.createStatement();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public void showMenu() {
 
-        // TODO: figure out how to troubleshoot queries
-
         boolean programRun = true;
         boolean inputRun;
 
-        while (programRun){
+        while (programRun) {
             System.out.println("\nRMS Records Management Queries");
             System.out.println("[1] View a product record and the list of orders containing that product");
             System.out.println("[2] View a customer record and their order history");
@@ -70,14 +59,15 @@ public class RestaurantRecordsMgt {
     private void viewProduct() {
         boolean programRun = true;
         while (programRun) {
-            String query = "SELECT * FROM Inventory;";
+            String query = "SELECT product_id, product_name, quantity FROM Inventory;";
 
-            try {
-                ResultSet resultSet = statement.executeQuery(query);
+            try (PreparedStatement pstmt = connection.prepareStatement(query);
+                 ResultSet resultSet = pstmt.executeQuery()) {
+
                 List<Integer> rows = new ArrayList<>();
 
                 System.out.println("List of all items in the inventory: ");
-                while (resultSet.next()){
+                while (resultSet.next()) {
                     int id = resultSet.getInt("product_id");
                     String name = resultSet.getString("product_name");
                     int qty = resultSet.getInt("quantity");
@@ -88,73 +78,74 @@ public class RestaurantRecordsMgt {
                 }
 
                 boolean inputRun = true;
-                while (inputRun){
+                while (inputRun) {
                     try {
                         int id = Utilities.getUserInput("Product ID of item to view: ");
 
-                        if (rows.contains(id)){
+                        if (rows.contains(id)) {
 
-                            query = "SELECT o.order_id, oi.quantity AS quantity_ordered, oi.price_per_unit, o.total_amount AS total_amount_of_order, o.order_datetime\n" +
-                                    "FROM Inventory i " +
-                                    "JOIN Order_Item oi ON i.product_id = oi.product_id " +
-                                    "JOIN Orders o ON o.order_id = oi.order_id " +
-                                    "WHERE i.product_id = 15;";
+                            query = """
+                                    SELECT o.order_id, oi.quantity AS quantity_ordered, oi.price_per_unit,\s
+                                           o.total_amount AS total_amount_of_order, o.order_datetime
+                                    FROM Inventory i\s
+                                    JOIN Order_Item oi ON i.product_id = oi.product_id\s
+                                    JOIN Orders o ON o.order_id = oi.order_id\s
+                                    WHERE i.product_id = ?
+                                    ORDER BY oi.order_item_id;
+                                   \s""";
 
-                            try {
-                                resultSet = statement.executeQuery(query);
+                            try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
+                                detailStmt.setInt(1, id);
+                                try (ResultSet detailResult = detailStmt.executeQuery()) {
 
-                                System.out.println("\nOrder Details for Product ID: " + id);
-                                System.out.println("-----------------------------------------------------");
+                                    System.out.println("\nOrder Details for Product ID: " + id);
+                                    System.out.println("-".repeat(100));
+                                    System.out.printf("%-10s %-15s %-15s %-15s %-20s\n", "Order ID", "Quantity", "Price per Unit", "Total Amount", "Order Date");
+                                    System.out.println("-".repeat(100));
 
-                                boolean hasRecords = false;
+                                    boolean hasRecords = false;
 
-                                while (resultSet.next()) {
-                                    hasRecords = true;
+                                    while (detailResult.next()) {
+                                        hasRecords = true;
 
-                                    int orderId = resultSet.getInt("order_id");
-                                    int quantityOrdered = resultSet.getInt("quantity_ordered");
-                                    double pricePerUnit = resultSet.getDouble("price_per_unit");
-                                    double totalAmount = resultSet.getDouble("total_amount_of_order");
-                                    String orderDate = resultSet.getString("order_datetime");
+                                        int orderId = detailResult.getInt("order_id");
+                                        int quantityOrdered = detailResult.getInt("quantity_ordered");
+                                        double pricePerUnit = detailResult.getDouble("price_per_unit");
+                                        double totalAmount = detailResult.getDouble("total_amount_of_order");
+                                        String orderDate = detailResult.getString("order_datetime");
 
-                                    System.out.printf("Order ID: %d | Quantity: %d | Price per unit: %.2f | Total: %.2f | Date: %s\n",
-                                            orderId, quantityOrdered, pricePerUnit, totalAmount, orderDate);
-                                }
-
-                                if (!hasRecords) {
-                                    System.out.println("No order records found for this product.");
-                                }
-
-                                System.out.println("-----------------------------------------------------");
-
-
-                                boolean validChoice = false;
-                                while (!validChoice) {
-                                    int choice = Utilities.getUserInput("Continue viewing product records? (1 - yes, 2 - no): ");
-
-                                    switch (choice) {
-                                        case 1:
-                                            validChoice = true;
-                                            break;
-                                        case 2:
-                                            System.out.println("Exiting view products menu...");
-                                            programRun = false;
-                                            inputRun = false;
-                                            validChoice = true;
-                                            break;
-                                        default:
-                                            System.out.println("Invalid choice. Please enter 1 or 2.");
-                                            break;
+                                        System.out.printf("%-10d %-15d %-15.2f %-15.2f %-20s\n",
+                                                orderId, quantityOrdered, pricePerUnit, totalAmount, orderDate);
                                     }
+
+                                    if (!hasRecords) {
+                                        System.out.println("No order records found for this product.");
+                                    }
+
+                                    System.out.println("-".repeat(100));
                                 }
-                            } catch (SQLException e) {
-                                System.out.println("Query error, edit MySQL database and try again.");
+                            }
+
+                            boolean validChoice = false;
+                            while (!validChoice) {
+                                int choice = Utilities.getUserInput("Continue viewing product records? (1 - yes, 2 - no): ");
+
+                                switch (choice) {
+                                    case 1 -> validChoice = true;
+                                    case 2 -> {
+                                        System.out.println("Exiting view products menu...");
+                                        programRun = false;
+                                        inputRun = false;
+                                        validChoice = true;
+                                    }
+                                    default -> System.out.println("Invalid choice. Please enter 1 or 2.");
+                                }
                             }
 
                         } else {
-                            throw new InputMismatchException();
+                            throw new InputMismatchException("Product ID not found.");
                         }
-                    } catch (InputMismatchException e){
+                    } catch (InputMismatchException e) {
                         System.out.println("Invalid input. Please try again.");
                     }
                 }
@@ -163,8 +154,6 @@ public class RestaurantRecordsMgt {
                 System.out.println("Query error, edit MySQL database and try again.");
             }
         }
-
-
     }
 
     private void viewCustomer() {
@@ -175,5 +164,4 @@ public class RestaurantRecordsMgt {
 
     private void viewOrder() {
     }
-
 }
