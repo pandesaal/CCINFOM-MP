@@ -83,9 +83,9 @@ public class RestaurantRecordsMgt {
                         int id = Utilities.getUserInput("Product ID of item to view: ");
 
                         if (rows.contains(id)) {
-
+                            // fetches all orders that contain a product belonging to the inventory (tama ba)
                             query = """
-                                    SELECT o.order_id, oi.quantity AS quantity_ordered, oi.price_per_unit,\s
+                                    SELECT o.order_id, oi.quantity AS quantity_ordered,\s
                                            o.total_amount AS total_amount_of_order, o.order_datetime
                                     FROM Inventory i\s
                                     JOIN Order_Item oi ON i.product_id = oi.product_id\s
@@ -100,7 +100,7 @@ public class RestaurantRecordsMgt {
 
                                     System.out.println("\nOrder Details for Product ID: " + id);
                                     System.out.println("-".repeat(100));
-                                    System.out.printf("%-10s %-15s %-15s %-15s %-20s\n", "Order ID", "Quantity", "Price per Unit", "Total Amount", "Order Date");
+                                    System.out.printf("%-10s %-15s %-15s %-15s %-20s\n", "Order ID", "Quantity", "Total Amount", "Order Date");
                                     System.out.println("-".repeat(100));
 
                                     boolean hasRecords = false;
@@ -110,12 +110,11 @@ public class RestaurantRecordsMgt {
 
                                         int orderId = detailResult.getInt("order_id");
                                         int quantityOrdered = detailResult.getInt("quantity_ordered");
-                                        double pricePerUnit = detailResult.getDouble("price_per_unit");
                                         double totalAmount = detailResult.getDouble("total_amount_of_order");
                                         String orderDate = detailResult.getString("order_datetime");
 
-                                        System.out.printf("%-10d %-15d %-15.2f %-15.2f %-20s\n",
-                                                orderId, quantityOrdered, pricePerUnit, totalAmount, orderDate);
+                                        System.out.printf("%-10d %-15d %-15.2f %-20s\n",
+                                                orderId, quantityOrdered, totalAmount, orderDate);
                                     }
 
                                     if (!hasRecords) {
