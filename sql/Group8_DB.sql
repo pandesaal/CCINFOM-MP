@@ -141,41 +141,12 @@ VALUES
 CREATE TABLE IF NOT EXISTS Order_Item (
     order_item_id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT NOT NULL,
-	product_id INT NOT NULL,
+    product_id INT NOT NULL,
     quantity INT DEFAULT 0 CHECK (quantity > 0),
     price_per_unit DECIMAL(10, 2) NOT NULL CHECK (price_per_unit > 0),
-    subtotal DECIMAL(10, 2) NOT NULL CHECK (subtotal > 0) DEFAULT 0.01,
-	FOREIGN KEY (order_id) REFERENCES Orders(order_id),
+    FOREIGN KEY (order_id) REFERENCES Orders(order_id),
     FOREIGN KEY (product_id) REFERENCES Inventory(product_id)
 );
-
--- Trigger to calculate subtotal before inserting an order item
--- activated when INSERT INTO is used
-DELIMITER $$	-- delimiter allows you to change the character or string that signifies the end of a SQL statement
-				-- so that MySQL does not end BEGIN...END blocks prematurely
-CREATE TRIGGER calculate_subtotal_before_insert
-BEFORE INSERT ON Order_Item
-FOR EACH ROW
-BEGIN
-    SET NEW.subtotal = NEW.quantity * NEW.price_per_unit;
-    -- NEW refers to the new row currently being inserted or updated
-END$$
-
--- Trigger to calculate subtotal after updating an order item
--- activated when UPDATE is used
-CREATE TRIGGER calculate_subtotal_after_update
-AFTER UPDATE ON Order_Item
-FOR EACH ROW
-BEGIN
-    IF OLD.quantity != NEW.quantity OR OLD.price_per_unit != NEW.price_per_unit THEN
-        UPDATE Order_Item
-        SET subtotal = NEW.quantity * NEW.price_per_unit
-        WHERE order_item_id = NEW.order_item_id;
-    END IF;
-END$$
-
-DELIMITER ;  -- Reset delimiter back to default
-
 
 INSERT INTO Order_Item (order_id, product_id, quantity, price_per_unit)
 VALUES
