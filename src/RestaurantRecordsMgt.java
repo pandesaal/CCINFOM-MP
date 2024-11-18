@@ -159,7 +159,113 @@ public class RestaurantRecordsMgt {
     }
 
     private void viewEmployee() {
-    }
+        boolean programRun = true;
+        while (programRun) {
+            String query = "SELECT employee_id, first_name, last_name FROM Employee;";
+
+            try (PreparedStatement pstmt = connection.prepareStatement(query);
+                 ResultSet resultSet = pstmt.executeQuery()) {
+
+                List<Integer> employeeIds = new ArrayList<>();
+
+                System.out.println("List of all employees: ");
+                boolean hasEmployeesCount;
+                hasEmployeesCount = false;
+
+                while (resultSet.next()) {
+                    hasEmployeesCount = true;
+                    int id = resultSet.getInt("employee_id");
+                    String firstName = resultSet.getString("first_name");
+                    String lastName = resultSet.getString("last_name");
+
+                    employeeIds.add(id);
+
+                    System.out.printf("[%d] %s %s\n", id, firstName, lastName);
+                }
+
+                if (!hasEmployeesCount) {
+                    System.out.println("No employees found.");
+                    break;
+                }
+
+                boolean inputRun = true;
+                while (inputRun) {
+                    try {
+                        int id = Utilities.getUserInput("Employee ID of employee to view: ");
+
+                        if (employeeIds.contains(id)) {
+
+                            query = """
+                                    SELECT e.first_name, e.last_name, r.role_name, t.shift_type, t.time_start, t.time_end
+                                    FROM Employee e
+                                    JOIN Roles r ON e.role_id = r.role_id
+                                    JOIN TimeShift t ON e.time_shiftid = t.time_shiftid
+                                    WHERE e.employee_id = ?
+                                    ORDER BY e.employee_id;
+                                    """;
+
+                            try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
+                                detailStmt.setInt(1, id);
+                                try (ResultSet detailResult = detailStmt.executeQuery()) {
+
+                                    System.out.println("\nEmployee Details for Employee ID: " + id);
+                                    System.out.println("-".repeat(100));
+                                    System.out.printf("%-10s %-15s %-15s %-15s %-20s %-20s %-20s\n", "Employee ID", "First Name", "Last Name", "Role", "Shift Type", "Start Time", "End Time");
+                                    System.out.println("-".repeat(100));
+
+                                    boolean hasEmployeeDetails = false;
+
+                                    while (detailResult.next()) {
+                                        hasEmployeeDetails = true;
+                                        String firstName = detailResult.getString("first_name");
+                                        String lastName = detailResult.getString("last_name");
+                                        String roleName = detailResult.getString("role_name");
+                                        String shiftType = detailResult.getString("shift_type");
+                                        Time startTime = detailResult.getTime("time_start");
+                                        Time endTime = detailResult.getTime("end_time");
+
+                                        System.out.printf("%-15d %-15s %-15s %-20s %-20s %-20s %-20s\n", id, firstName, lastName, roleName, shiftType, startTime, endTime);
+                                    }
+
+                                    if (!hasEmployeeDetails) {
+                                        System.out.println("No details found for this employee.");
+                                    }
+
+                                    System.out.println("-".repeat(100));
+                                }
+                            }
+
+                            boolean validChoice = false;
+                            while (!validChoice) {
+                                int choice = Utilities.getUserInput("Continue viewing employee records? (1 - yes, 2 - no): ");
+
+                                switch (choice) {
+                                    case 1 -> validChoice = true;
+                                    case 2 -> {
+                                        System.out.println("Exiting view employees menu...");
+                                        programRun = false;
+                                        inputRun = false;
+                                        validChoice = true;
+                                    }
+                                    default -> System.out.println("Invalid choice. Please enter 1 or 2.");
+                                }
+                            }
+                        } else {
+                            throw new InputMismatchException("Employee ID not found.");
+                        }
+                    } catch (InputMismatchException e) {
+                        System.out.println("Invalid input. Please try again.");
+                    } catch (SQLException e) {
+                        System.out.println("Database error: " + e.getMessage());
+                    }
+                }
+
+            } catch (SQLException e) {
+                System.out.println("Query error: " + e.getMessage());
+            }
+
+        }
+    } 
 
     private void viewOrder() {
     }
