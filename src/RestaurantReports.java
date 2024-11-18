@@ -1,5 +1,8 @@
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.IllegalFormatException;
 import java.util.InputMismatchException;
+import java.util.List;
 
 public class RestaurantReports {
 
@@ -121,51 +124,70 @@ public class RestaurantReports {
         // TODO: Profit margins for each menu item within a given day, month, or year
 
         boolean programRun = true;
-//        while (programRun) {
-//            String query = "SELECT * FROM Inventory;";
-//
-//            try {
-//                ResultSet resultSet = statement.executeQuery(query);
-//                List<Integer> rows = new ArrayList<>();
-//
-//                System.out.println("List of all items in the inventory: ");
-//                while (resultSet.next()){
-//                    int id = resultSet.getInt("product_id");
-//                    String name = resultSet.getString("product_name");
-//                    int qty = resultSet.getInt("quantity");
-//
-//                    rows.add(id);
-//
-//                    System.out.printf("[%d] %s (Stock: %d)\n", id, name, qty);
-//                }
-//
-//                boolean inputRun = true;
-//                while (inputRun){
-//                    try {
-//                        int id = Utilities.getUserInput("Product ID of item to view: ");
-//
-//                        if (rows.contains(id)){
-//
-//                            boolean validInputs = false;
-//                            while (!validInputs){
-//                                int day = Utilities.getUserInput("Enter day (0 if skip): ");
-//                                int month = Utilities.getUserInput("Enter month (0 if skip): ");
-//                                int year = Utilities.getUserInput("Enter year (0 if skip): ");
-//
-//
-//                            }
-//
-//                        } else {
-//                            throw new InputMismatchException();
-//                        }
-//                    } catch (InputMismatchException e){
-//                        System.out.println("Invalid input. Please try again.");
-//                    }
-//                }
-//
-//            } catch (SQLException e) {
-//                System.out.println("Query error, edit MySQL database and try again.");
-//            }
-//        }
+        while (programRun) {
+            String query = "SELECT * FROM Inventory;";
+
+            try {
+                ResultSet resultSet = statement.executeQuery(query);
+                List<Integer> rows = new ArrayList<>();
+
+                System.out.println("List of all items in the inventory: ");
+                while (resultSet.next()){
+                    int id = resultSet.getInt("product_id");
+                    String name = resultSet.getString("product_name");
+                    int qty = resultSet.getInt("quantity");
+
+                    rows.add(id);
+
+                    System.out.printf("[%d] %s (Stock: %d)\n", id, name, qty);
+                }
+
+                boolean inputRun = true;
+                while (inputRun){
+                    try {
+                        int id = Utilities.getUserInput("Product ID of item to view: ");
+
+                        if (rows.contains(id)){
+
+                            boolean validInputs = false;
+                            while (!validInputs){
+                                int day = Utilities.getUserInput("Enter day (0 if skip): ");
+                                int month = Utilities.getUserInput("Enter month (0 if skip): ");
+                                int year = Utilities.getUserInput("Enter year (0 if skip): ");
+
+                                String date;
+
+                                if (day < 0 || month < 0 || year < 0) {
+                                    throw new InputMismatchException();
+                                }
+
+                                if (day != 0 && month != 0 && year != 0){
+                                    date = Date.valueOf(String.format("%d-%02d-%02d", year, month, day)).toString();
+
+                                } else {
+                                    date = String.format("%s-%s-%s",
+                                            year == 0 ? "%" : String.format("%04d", year),
+                                            month == 0 ? "%" : String.format("%02d", month),
+                                            day == 0 ? "%" : String.format("%02d", day));
+                                }
+                                validInputs = true;
+                            }
+
+                            query = "";
+
+                        } else {
+                            throw new InputMismatchException();
+                        }
+                    } catch (InputMismatchException e){
+                        System.out.println("Invalid input. Please try again.");
+                    } catch (IllegalFormatException e){
+                        System.out.println("Date entered not valid, try again.");
+                    }
+                }
+
+            } catch (SQLException e) {
+                System.out.println("Query error, edit MySQL database and try again.");
+            }
+        }
     }
 }

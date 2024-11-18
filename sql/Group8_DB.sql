@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS Inventory (
     make_price DECIMAL(10, 2) NOT NULL CHECK (make_price > 0),
     sell_price DECIMAL(10, 2) NOT NULL CHECK (sell_price > 0),
     quantity INT DEFAULT 0 CHECK (quantity >= 0),
-    last_restock TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_restock TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     last_restocked_by INT NOT NULL,
     FOREIGN KEY (last_restocked_by) REFERENCES Employee(employee_id)
 );

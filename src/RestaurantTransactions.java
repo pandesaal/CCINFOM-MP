@@ -146,7 +146,7 @@ public class RestaurantTransactions {
 
                             if (continueChange) {
                                 query = "UPDATE Inventory " +
-                                        "SET quantity = " + qty + ", last_restock = CURRENT_TIMESTAMP, last_restocked_by = " + employee + " " +
+                                        "SET quantity = " + qty + ", last_restocked_by = " + employee + " " +
                                         "WHERE product_id = " + id + ";";
 
                                 System.out.println(query);
