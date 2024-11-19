@@ -201,7 +201,7 @@ public class RestaurantRecordsMgt {
                                     SELECT e.first_name, e.last_name, r.role_name, t.shift_type, t.time_start, t.time_end
                                     FROM Employee e
                                     JOIN Roles r ON e.role_id = r.role_id
-                                    JOIN TimeShift t ON e.time_shiftid = t.time_shiftid
+                                    LEFT JOIN TimeShift t ON e.time_shiftid = t.time_shiftid
                                     WHERE e.employee_id = ?
                                     ORDER BY e.employee_id;
                                     """;
@@ -212,13 +212,13 @@ public class RestaurantRecordsMgt {
 
                                     System.out.println("\nEmployee Details for Employee ID: " + id);
                                     System.out.println("-".repeat(100));
-                                    System.out.printf("%-10s %-15s %-15s %-20s %-20s %-20s %-20s\n", "Employee ID", "First Name", "Last Name", "Role", "Shift Type", "Start Time", "End Time");
+                                    System.out.printf("%-10s %-15s %-15s %-20s %-20s %-20s %-20s\n",
+                                            "Employee ID", "First Name", "Last Name", "Role",
+                                            "Shift Type", "Start Time", "End Time");
                                     System.out.println("-".repeat(100));
 
-                                    boolean hasEmployeeDetails = false;
-
                                     while (detailResult.next()) {
-                                        hasEmployeeDetails = true;
+
                                         String firstName = detailResult.getString("first_name");
                                         String lastName = detailResult.getString("last_name");
                                         String roleName = detailResult.getString("role_name");
@@ -226,12 +226,17 @@ public class RestaurantRecordsMgt {
                                         Time startTime = detailResult.getTime("time_start");
                                         Time endTime = detailResult.getTime("time_end");
 
-                                        System.out.printf("%-10d %-15s %-15s %-20s %-20s %-20s %-20s\n", id, firstName, lastName, roleName, shiftType, startTime, endTime);
+                                        // Display NULL or empty fields as "N/A"
+                                        System.out.printf("%-10d %-15s %-15s %-20s %-20s %-20s %-20s\n",
+                                                id,
+                                                firstName != null ? firstName : "N/A",
+                                                lastName != null ? lastName : "N/A",
+                                                roleName != null ? roleName : "N/A",
+                                                shiftType != null ? shiftType : "N/A",
+                                                startTime != null ? startTime : "N/A",
+                                                endTime != null ? endTime : "N/A");
                                     }
 
-                                    if (!hasEmployeeDetails) {
-                                        System.out.println("No details found for this employee.");
-                                    }
 
                                     System.out.println("-".repeat(100));
                                 }
