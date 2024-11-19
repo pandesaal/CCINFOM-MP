@@ -312,7 +312,7 @@ public class RestaurantRecordsMgt {
                             // View an order and the inventory it affected
                             query = """
                                         SELECT o.order_id, i.product_name, oi.quantity AS "quantity_ordered", 
-                                        o.total_amount AS "order_total", i.quantity AS "current_stock"\s
+                                        i.quantity AS "current_stock"\s
                                         FROM Orders o\s
                                         JOIN Order_Item oi ON o.order_id = oi.order_id\s
                                         JOIN Inventory i ON i.product_id = oi.product_id\s
@@ -327,9 +327,9 @@ public class RestaurantRecordsMgt {
     
                                     System.out.println("\nInventory affected by Order ID: " + orderID);
                                     System.out.println("-".repeat(100));               
-                                    System.out.printf("%-10s %-25s %-10s %-15.2s %-10s\n",
+                                    System.out.printf("%-10s %-25s %-10s %-10s\n",
                                                       // left-aligned string (s) with a minimum width of 10 characters
-                                                      "Order ID", "Product Name", "Quantity Ordered", "Order Total", "Current Stock");
+                                                      "Order ID", "Product Name", "Quantity Ordered", "Current Stock");
                                                       // column headers for the table
                                     System.out.println("-".repeat(100));
     
@@ -344,12 +344,10 @@ public class RestaurantRecordsMgt {
                                         int orderId = detailResult.getInt("order_id");
                                         String productName = detailResult.getString("product_name");
                                         int quantityOrdered = detailResult.getInt("quantity_ordered");
-                                        double orderTotal = detailResult.getDouble("order_total");
                                         int currentStock = detailResult.getInt("current_stock");
-    
-    
-                                        System.out.printf("%-10s %-25s %-10s %-15.2s %-10s\n",
-                                           orderId, productName, quantityOrdered, orderTotal, currentStock);
+                                        
+                                        System.out.printf("%-10s %-25s %-10s %-10s\n",
+                                           orderId, productName, quantityOrdered, currentStock);
                                     }
     
                                     if (!hasRecords)
