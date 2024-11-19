@@ -160,7 +160,7 @@ public class RestaurantRecordsMgt {
     private void viewCustomer() {
     }
 
-    private void viewEmployee() {
+       private void viewEmployee() {
         boolean programRun = true;
         while (programRun) {
             String query = "SELECT employee_id, first_name, last_name FROM Employee;";
@@ -212,7 +212,7 @@ public class RestaurantRecordsMgt {
 
                                     System.out.println("\nEmployee Details for Employee ID: " + id);
                                     System.out.println("-".repeat(100));
-                                    System.out.printf("%-10s %-15s %-15s %-15s %-20s %-20s %-20s\n", "Employee ID", "First Name", "Last Name", "Role", "Shift Type", "Start Time", "End Time");
+                                    System.out.printf("%-10s %-15s %-15s %-20s %-20s %-20s %-20s\n", "Employee ID", "First Name", "Last Name", "Role", "Shift Type", "Start Time", "End Time");
                                     System.out.println("-".repeat(100));
 
                                     boolean hasEmployeeDetails = false;
@@ -224,9 +224,9 @@ public class RestaurantRecordsMgt {
                                         String roleName = detailResult.getString("role_name");
                                         String shiftType = detailResult.getString("shift_type");
                                         Time startTime = detailResult.getTime("time_start");
-                                        Time endTime = detailResult.getTime("end_time");
+                                        Time endTime = detailResult.getTime("time_end");
 
-                                        System.out.printf("%-15d %-15s %-15s %-20s %-20s %-20s %-20s\n", id, firstName, lastName, roleName, shiftType, startTime, endTime);
+                                        System.out.printf("%-10d %-15s %-15s %-20s %-20s %-20s %-20s\n", id, firstName, lastName, roleName, shiftType, startTime, endTime);
                                     }
 
                                     if (!hasEmployeeDetails) {
@@ -267,7 +267,7 @@ public class RestaurantRecordsMgt {
             }
 
         }
-    } 
+    }
 
     private void viewOrder() {
     }
