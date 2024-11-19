@@ -316,5 +316,166 @@ public class RestaurantTransactions {
 }
 
     private void assignShift() {
+        boolean programRun = true;
+
+        while (programRun) {
+            try {
+                // Get Employees without a Shift
+                String query = """
+                SELECT e.employee_id, e.first_name, e.last_name, r.role_name
+                FROM Employee e
+                JOIN Roles r ON e.role_id = r.role_id
+                WHERE e.time_shiftid IS NULL
+                ORDER by role_name;
+                """;
+
+                List<List<Object>> employeesWithoutShift = new ArrayList<>();
+
+                try (PreparedStatement preparedStatement = connection.prepareStatement(query);
+                     ResultSet resultSet = preparedStatement.executeQuery()) {
+
+                    System.out.println("Employees without an assigned shift:");
+                    while (resultSet.next()) {
+                        int id = resultSet.getInt("employee_id");
+                        String firstName = resultSet.getString("first_name");
+                        String lastName = resultSet.getString("last_name");
+                        String roleName = resultSet.getString("role_name");
+
+                        employeesWithoutShift.add(List.of(id, firstName, lastName, roleName));
+                        System.out.printf("[%d] %s %s (%s)\n", id, firstName, lastName, roleName);
+                    }
+                    System.out.println("[0] Exit");
+
+                    if (employeesWithoutShift.isEmpty()) {
+                        System.out.println("No employees without a shift found. Exiting...");
+                        break;
+                    }
+                }
+
+                // Ask user to select an Employee
+                boolean inputRun = true;
+                while (inputRun) {
+                    try {
+                        int selectedEmployeeId = Utilities.getUserInput("Enter the Employee ID to assign a shift: ");
+
+                        if (selectedEmployeeId == 0) {
+                            System.out.println("Exiting shift assignment menu...");
+                            programRun = false;
+                            inputRun = false;
+                            break;
+                        }
+                        List<Object> selectedEmployee = employeesWithoutShift.stream()
+                                .filter(emp -> (int) emp.getFirst() == selectedEmployeeId)
+                                .findFirst()
+                                .orElse(null);
+
+                        if (selectedEmployee == null) {
+                            throw new InputMismatchException("Invalid Employee ID.");
+                        }
+
+                        String employeeRole = (String) selectedEmployee.get(3);
+
+                        // Check for Available Shifts (1:1 role-to-timeshift ratio)
+                        query = """
+                        SELECT ts.time_shiftid, ts.shift_type, ts.time_start, ts.time_end
+                        FROM TimeShift ts
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM Employee e
+                            JOIN Roles r ON e.role_id = r.role_id
+                            WHERE e.time_shiftid = ts.time_shiftid
+                            AND r.role_name = ?
+                        );
+                        """;
+
+                        try (PreparedStatement shiftStmt = connection.prepareStatement(query)) {
+                            shiftStmt.setString(1, employeeRole);
+
+                            try (ResultSet shiftResult = shiftStmt.executeQuery()) {
+                                if (!shiftResult.next()) {
+                                    System.out.println("No available shifts for the selected employee's role. Exiting...");
+                                    break;
+                                }
+
+                                System.out.println("Available Shifts:");
+                                do {
+                                    int shiftId = shiftResult.getInt("time_shiftid");
+                                    String shiftType = shiftResult.getString("shift_type");
+                                    Time startTime = shiftResult.getTime("time_start");
+                                    Time endTime = shiftResult.getTime("time_end");
+
+                                    System.out.printf("[%d] %s (%s - %s)\n", shiftId, shiftType, startTime, endTime);
+
+                                } while (shiftResult.next());
+
+                                System.out.println("[0] Exit");
+
+                                // Prompt user to select a shift
+                                int shiftId = Utilities.getUserInput("Enter the Shift ID to assign to this employee: ");
+
+                                if(shiftId == 0)
+                                    break;
+
+                                // Validate 1:1
+                                query = """
+                                SELECT COUNT(*) AS role_count
+                                FROM Employee e
+                                JOIN Roles r ON e.role_id = r.role_id
+                                WHERE e.time_shiftid = ? AND r.role_name = ?;
+                                """;
+
+                                try (PreparedStatement validationStmt = connection.prepareStatement(query)) {
+                                    validationStmt.setInt(1, shiftId);
+                                    validationStmt.setString(2, employeeRole);
+
+                                    try (ResultSet validationResult = validationStmt.executeQuery()) {
+                                        if (validationResult.next() && validationResult.getInt("role_count") > 0) {
+                                            System.out.println("Error: This shift is not available.");
+                                            continue;
+                                        }
+                                    }
+                                }
+
+                                // Confirm Shift Assignment
+                                query = "UPDATE Employee SET time_shiftid = ? WHERE employee_id = ?";
+                                try (PreparedStatement updateStmt = connection.prepareStatement(query)) {
+                                    updateStmt.setInt(1, shiftId);
+                                    updateStmt.setInt(2, selectedEmployeeId);
+
+                                    int rowsAffected = updateStmt.executeUpdate();
+                                    if (rowsAffected > 0) {
+                                        System.out.printf("Shift successfully assigned to %s %s (%s).\n",
+                                                selectedEmployee.get(1), selectedEmployee.get(2), employeeRole);
+                                    } else {
+                                        System.out.println("Failed to assign shift. Please try again.");
+                                    }
+                                }
+
+                                // Continue or Exit
+                                boolean validChoice = false;
+                                while (!validChoice) {
+                                    int nextChoice = Utilities.getUserInput("Assign another shift? (1 - yes, 2 - no): ");
+                                    switch (nextChoice) {
+                                        case 1 -> validChoice = true;
+                                        case 2 -> {
+                                            System.out.println("Exiting shift assignment menu...");
+                                            programRun = false;
+                                            inputRun = false;
+                                            validChoice = true;
+                                        }
+                                        default -> System.out.println("Invalid choice. Please enter 1 or 2.");
+                                    }
+                                }
+                            }
+                        }
+                    } catch (InputMismatchException e) {
+                        System.out.println("Invalid input. Please try again.");
+                    }
+                }
+            } catch (SQLException e) {
+                System.out.println("Database error: " + e.getMessage());
+            }
+        }
     }
+
 }
