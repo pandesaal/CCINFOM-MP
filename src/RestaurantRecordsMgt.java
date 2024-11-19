@@ -101,7 +101,7 @@ public class RestaurantRecordsMgt {
 
                                     System.out.println("\nOrder Details for Product ID: " + id);
                                     System.out.println("-".repeat(100));
-                                    System.out.printf("%-10s %-15s %-15s %-15s %-20s\n", "Order ID", "Quantity", "Total Amount", "Order Date");
+                                    System.out.printf("%-10s %-15s %-15s %-15s\n", "Order ID", "Quantity", "Total Amount", "Order Date");
                                     System.out.println("-".repeat(100));
 
                                     //  flag to check if any records exist for the given product ID
