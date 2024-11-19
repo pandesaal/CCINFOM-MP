@@ -315,19 +315,19 @@ public class RestaurantTransactions {
     }
 }
 
-    private void assignShift() {
+        private void assignShift() {
         boolean programRun = true;
 
         while (programRun) {
             try {
                 // Get Employees without a Shift
                 String query = """
-                SELECT e.employee_id, e.first_name, e.last_name, r.role_name
-                FROM Employee e
-                JOIN Roles r ON e.role_id = r.role_id
-                WHERE e.time_shiftid IS NULL
-                ORDER by role_name;
-                """;
+                                SELECT e.employee_id, e.first_name, e.last_name, r.role_name
+                                FROM Employee e
+                                JOIN Roles r ON e.role_id = r.role_id
+                                WHERE e.time_shiftid IS NULL
+                                ORDER BY role_name;
+                                """;
 
                 List<List<Object>> employeesWithoutShift = new ArrayList<>();
 
@@ -362,8 +362,9 @@ public class RestaurantTransactions {
                             System.out.println("Exiting shift assignment menu...");
                             programRun = false;
                             inputRun = false;
-                            break;
+                            continue;
                         }
+
                         List<Object> selectedEmployee = employeesWithoutShift.stream()
                                 .filter(emp -> (int) emp.getFirst() == selectedEmployeeId)
                                 .findFirst()
@@ -377,16 +378,17 @@ public class RestaurantTransactions {
 
                         // Check for Available Shifts (1:1 role-to-timeshift ratio)
                         query = """
-                        SELECT ts.time_shiftid, ts.shift_type, ts.time_start, ts.time_end
-                        FROM TimeShift ts
-                        WHERE NOT EXISTS (
-                            SELECT 1
-                            FROM Employee e
-                            JOIN Roles r ON e.role_id = r.role_id
-                            WHERE e.time_shiftid = ts.time_shiftid
-                            AND r.role_name = ?
-                        );
-                        """;
+                    SELECT ts.time_shiftid, ts.shift_type, ts.time_start, ts.time_end
+                    FROM TimeShift ts
+                    WHERE NOT EXISTS (
+                        SELECT 1
+                        FROM Employee e
+                        JOIN Roles r ON e.role_id = r.role_id
+                        WHERE e.time_shiftid = ts.time_shiftid
+                        AND r.role_name = ?
+                    )
+                    LIMIT 1;
+                    """;
 
                         try (PreparedStatement shiftStmt = connection.prepareStatement(query)) {
                             shiftStmt.setString(1, employeeRole);
@@ -397,32 +399,40 @@ public class RestaurantTransactions {
                                     break;
                                 }
 
-                                System.out.println("Available Shifts:");
-                                do {
-                                    int shiftId = shiftResult.getInt("time_shiftid");
-                                    String shiftType = shiftResult.getString("shift_type");
-                                    Time startTime = shiftResult.getTime("time_start");
-                                    Time endTime = shiftResult.getTime("time_end");
+                                // Automatically fetch the first available shift
+                                int shiftId = shiftResult.getInt("time_shiftid");
+                                String shiftType = shiftResult.getString("shift_type");
+                                Time startTime = shiftResult.getTime("time_start");
+                                Time endTime = shiftResult.getTime("time_end");
 
-                                    System.out.printf("[%d] %s (%s - %s)\n", shiftId, shiftType, startTime, endTime);
+                                System.out.printf("First available shift: [%d] %s (%s - %s)\n",
+                                        shiftId, shiftType, startTime, endTime);
 
-                                } while (shiftResult.next());
+                                // Confirm shift assignment
+                                boolean confirmAssignment = false;
+                                System.out.printf("Assign this shift to %s %s (%s)? (1 - Yes, 2 - No)\n",
+                                        selectedEmployee.get(1), selectedEmployee.get(2), employeeRole);
+                                int choice = Utilities.getUserInput("Confirm choice: ");
 
-                                System.out.println("[0] Exit");
+                                switch (choice) {
+                                    case 1 -> confirmAssignment = true;
+                                    case 2 -> {
+                                        System.out.println("Shift assignment canceled. Returning to menu...");
+                                        continue;
+                                    }
+                                    default -> {
+                                        System.out.println("Invalid choice. Returning to menu...");
+                                        continue;
+                                    }
+                                }
 
-                                // Prompt user to select a shift
-                                int shiftId = Utilities.getUserInput("Enter the Shift ID to assign to this employee: ");
-
-                                if(shiftId == 0)
-                                    break;
-
-                                // Validate 1:1
+                                // Validate 1:1 (role-to-timeshift) before assignment
                                 query = """
-                                SELECT COUNT(*) AS role_count
-                                FROM Employee e
-                                JOIN Roles r ON e.role_id = r.role_id
-                                WHERE e.time_shiftid = ? AND r.role_name = ?;
-                                """;
+                                        SELECT COUNT(*) AS role_count
+                                        FROM Employee e
+                                        JOIN Roles r ON e.role_id = r.role_id
+                                        WHERE e.time_shiftid = ? AND r.role_name = ?;
+                                        """;
 
                                 try (PreparedStatement validationStmt = connection.prepareStatement(query)) {
                                     validationStmt.setInt(1, shiftId);
@@ -430,13 +440,13 @@ public class RestaurantTransactions {
 
                                     try (ResultSet validationResult = validationStmt.executeQuery()) {
                                         if (validationResult.next() && validationResult.getInt("role_count") > 0) {
-                                            System.out.println("Error: This shift is not available.");
+                                            System.out.println("Error: This shift is already taken by another employee in the same role.");
                                             continue;
                                         }
                                     }
                                 }
 
-                                // Confirm Shift Assignment
+                                // Assign the shift to the employee
                                 query = "UPDATE Employee SET time_shiftid = ? WHERE employee_id = ?";
                                 try (PreparedStatement updateStmt = connection.prepareStatement(query)) {
                                     updateStmt.setInt(1, shiftId);
@@ -448,22 +458,6 @@ public class RestaurantTransactions {
                                                 selectedEmployee.get(1), selectedEmployee.get(2), employeeRole);
                                     } else {
                                         System.out.println("Failed to assign shift. Please try again.");
-                                    }
-                                }
-
-                                // Continue or Exit
-                                boolean validChoice = false;
-                                while (!validChoice) {
-                                    int nextChoice = Utilities.getUserInput("Assign another shift? (1 - yes, 2 - no): ");
-                                    switch (nextChoice) {
-                                        case 1 -> validChoice = true;
-                                        case 2 -> {
-                                            System.out.println("Exiting shift assignment menu...");
-                                            programRun = false;
-                                            inputRun = false;
-                                            validChoice = true;
-                                        }
-                                        default -> System.out.println("Invalid choice. Please enter 1 or 2.");
                                     }
                                 }
                             }
@@ -478,4 +472,5 @@ public class RestaurantTransactions {
         }
     }
 
+    
 }
