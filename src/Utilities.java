@@ -29,7 +29,7 @@ public class Utilities {
                 System.out.println("Connection successful!\n");
 
             } catch (SQLException e) {
-                System.out.println("Troubleshoot: check if connection is on or login credentials are correct.");
+                System.out.println(e.getMessage());
             }
         }
 

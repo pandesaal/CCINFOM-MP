@@ -1,8 +1,6 @@
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.IllegalFormatException;
 import java.util.InputMismatchException;
-import java.util.List;
 
 public class RestaurantReports {
 
@@ -125,122 +123,107 @@ public class RestaurantReports {
 
         boolean programRun = true;
         while (programRun) {
-            String query = "SELECT * FROM Inventory;";
 
-            try (PreparedStatement preparedStatement = connection.prepareStatement(query);
-                 ResultSet resultSet = preparedStatement.executeQuery()) {
+            try {
+                String date = "";
+                String displayDate = "";
 
-                List<Integer> rows = new ArrayList<>();
+                boolean validInputs = false;
+                while (!validInputs) {
+                    int day = Utilities.getUserInput("Enter day (0 if skip): ");
+                    int month = Utilities.getUserInput("Enter month (0 if skip): ");
+                    int year = Utilities.getUserInput("Enter year (0 if skip): ");
 
-                System.out.println("List of all items in the inventory: ");
-                while (resultSet.next()) {
-                    int id = resultSet.getInt("product_id");
-                    String name = resultSet.getString("product_name");
-                    int qty = resultSet.getInt("quantity");
 
-                    rows.add(id);
-                    System.out.printf("[%d] %s (Stock: %d)\n", id, name, qty);
+                    if (day < 0 || month < 0 || year < 0) throw new InputMismatchException();
+
+                    if (day != 0 && month != 0 && year != 0) {
+                        date = Date.valueOf(String.format("%d-%02d-%02d", year, month, day)).toString();
+                        displayDate = date;
+
+                    } else {
+                        date = String.format("%s-%s-%s",
+                                year == 0 ? "%" : String.format("%04d", year),
+                                month == 0 ? "%" : String.format("%02d", month),
+                                day == 0 ? "%" : String.format("%02d%%", day));
+                        displayDate = String.format("%s-%s-%s",
+                                year == 0 ? "XXXX" : String.format("%04d", year),
+                                month == 0 ? "XX" : String.format("%02d", month),
+                                day == 0 ? "XX" : String.format("%02d%%", day));
+                    }
+                    validInputs = true;
                 }
 
-                boolean inputRun = true;
-                while (inputRun) {
-                    try {
-                        int id = Utilities.getUserInput("Product ID of item to view: ");
-                        if (!rows.contains(id)) throw new InputMismatchException("Invalid Product ID.");
+                String query = "SELECT " +
+                        "    i.product_id, " +
+                        "    o.order_id, " +
+                        "    COUNT(*) AS total_orders_with_item, " +
+                        "    SUM(oi.quantity) AS total_amount_ordered, " +
+                        "    SUM(oi.quantity) * i.sell_price AS total_revenue, " +
+                        "    SUM(oi.quantity) * i.make_price AS total_cost, " +
+                        "    (SUM(oi.quantity) * i.sell_price) - (SUM(oi.quantity) * i.make_price) AS total_profit, " +
+                        "    o.order_datetime " +
+                        "FROM Inventory i " +
+                        "   JOIN Order_Item oi ON i.product_id = oi.product_id " +
+                        "   JOIN Orders o ON o.order_id = oi.order_id " +
+                        "WHERE o.order_datetime LIKE ? " +
+                        "GROUP BY i.product_id, o.order_id, o.order_datetime;";
 
-                        String date = "";
+                try (PreparedStatement statement = connection.prepareStatement(query)) {
+                    statement.setString(1, date);
 
-                        boolean validInputs = false;
-                        while (!validInputs){
-                            int day = Utilities.getUserInput("Enter day (0 if skip): ");
-                            int month = Utilities.getUserInput("Enter month (0 if skip): ");
-                            int year = Utilities.getUserInput("Enter year (0 if skip): ");
+                    try (ResultSet result = statement.executeQuery()) {
+                        System.out.println("\nProfit Margin Report for " + displayDate + ":");
+                        System.out.println("-".repeat(120));
+                        System.out.printf("%-10s %-10s %-20s %-15s %-15s %-10s %-10s %-10s\n",
+                                "Product ID", "Order ID", "Order Date", "Total Orders", "Total Quantity", "Revenue", "Cost", "Profit");
+                        System.out.println("-".repeat(120));
 
+                        boolean hasRecords = false;
 
-                            if (day < 0 || month < 0 || year < 0) throw new InputMismatchException();
+                        while (result.next()) {
+                            hasRecords = true;
 
-                            if (day != 0 && month != 0 && year != 0){
-                                date = Date.valueOf(String.format("%d-%02d-%02d", year, month, day)).toString();
+                            int productID = result.getInt("product_id");
+                            int orderId = result.getInt("order_id");
+                            int totalOrdersWithItem = result.getInt("total_orders_with_item");
+                            int totalAmountOrdered = result.getInt("total_amount_ordered");
+                            double totalRevenue = result.getDouble("total_revenue");
+                            double totalCost = result.getDouble("total_cost");
+                            double totalProfit = result.getDouble("total_profit");
+                            String orderDate = result.getString("order_datetime");
 
-                            } else {
-                                date = String.format("%s-%s-%s",
-                                        year == 0 ? "%" : String.format("%04d", year),
-                                        month == 0 ? "%" : String.format("%02d", month),
-                                        day == 0 ? "%" : String.format("%02d%%", day));
-                            }
-                            validInputs = true;
-                        }
-                            query = "SELECT " +
-                                "    o.order_id, " +
-                                "    COUNT(*) AS total_orders_with_item, " +
-                                "    SUM(oi.quantity) AS total_amount_ordered, " +
-                                "    SUM(oi.quantity) * i.sell_price AS total_revenue, " +
-                                "    SUM(oi.quantity) * i.make_price AS total_cost, " +
-                                "    (SUM(oi.quantity) * i.sell_price) - (SUM(oi.quantity) * i.make_price) AS total_profit, " +
-                                "    o.order_datetime " +
-                                "FROM Inventory i " +
-                                "   JOIN Order_Item oi ON i.product_id = oi.product_id " +
-                                "   JOIN Orders o ON o.order_id = oi.order_id " +
-                                "WHERE i.product_id = ? AND o.order_datetime LIKE ? " +
-                                "GROUP BY i.product_id, o.order_id, o.order_datetime;";
-
-                        try (PreparedStatement statement = connection.prepareStatement(query)) {
-                            statement.setInt(1, id);
-                            statement.setString(2, date);
-
-                            try (ResultSet result = statement.executeQuery()) {
-                                System.out.println("\nProfit Margin Report for Product ID: " + id);
-                                System.out.println("-".repeat(120));
-                                System.out.printf("%-10s %-20s %-15s %-15s %-10s %-10s %-10s\n",
-                                        "Order ID", "Order Date", "Total Orders", "Total Quantity", "Revenue", "Cost", "Profit");
-                                System.out.println("-".repeat(120));
-
-                                boolean hasRecords = false;
-
-                                while (result.next()) {
-                                    hasRecords = true;
-
-                                    int orderId = result.getInt("order_id");
-                                    int totalOrdersWithItem = result.getInt("total_orders_with_item");
-                                    int totalAmountOrdered = result.getInt("total_amount_ordered");
-                                    double totalRevenue = result.getDouble("total_revenue");
-                                    double totalCost = result.getDouble("total_cost");
-                                    double totalProfit = result.getDouble("total_profit");
-                                    String orderDate = result.getString("order_datetime");
-
-                                    System.out.printf("%-10d %-20s %-15d %-15d %-10.2f %-10.2f %-10.2f\n",
-                                            orderId, orderDate, totalOrdersWithItem, totalAmountOrdered, totalRevenue, totalCost, totalProfit);
-                                }
-
-                                if (!hasRecords) {
-                                    System.out.println("No order records found for this product.");
-                                }
-                                System.out.println("-".repeat(120));
-                            }
+                            System.out.printf("%-10d %-10d %-20s %-15d %-15d %-10.2f %-10.2f %-10.2f\n",
+                                    productID, orderId, orderDate, totalOrdersWithItem, totalAmountOrdered, totalRevenue, totalCost, totalProfit);
                         }
 
-                        boolean validChoice = false;
-                        while (!validChoice) {
-                            int choice = Utilities.getUserInput("Continue viewing profit margin report? (1 - yes, 2 - no): ");
-                            switch (choice) {
-                                case 1 -> validChoice = true;
-                                case 2 -> {
-                                    System.out.println("Exiting profit margin report menu...");
-                                    programRun = false;
-                                    inputRun = false;
-                                    validChoice = true;
-                                }
-                                default -> System.out.println("Invalid choice. Please enter 1 or 2.");
-                            }
+                        if (!hasRecords) {
+                            System.out.println("No order records found for this product.");
                         }
-                    } catch (InputMismatchException e) {
-                        System.out.println("Invalid input. Please try again.");
-                    } catch (IllegalFormatException e) {
-                        System.out.println("Date entered not valid, try again.");
+                        System.out.println("-".repeat(120));
                     }
                 }
+
             } catch (SQLException e) {
                 System.out.println("Query error, edit MySQL database and try again.");
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please try again.");
+            } catch (IllegalFormatException e) {
+                System.out.println("Date entered not valid, try again.");
+            }
+
+            boolean validChoice = false;
+            while (!validChoice) {
+                int choice = Utilities.getUserInput("Continue viewing profit margin report? (1 - yes, 2 - no): ");
+                switch (choice) {
+                    case 1 -> validChoice = true;
+                    case 2 -> {
+                        System.out.println("Exiting profit margin report menu...");
+                        programRun = false;
+                        validChoice = true;
+                    }
+                    default -> System.out.println("Invalid choice. Please enter 1 or 2.");
+                }
             }
         }
     }

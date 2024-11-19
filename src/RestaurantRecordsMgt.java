@@ -77,82 +77,76 @@ public class RestaurantRecordsMgt {
                     System.out.printf("[%d] %s (Stock: %d)\n", id, name, qty);
                 }
 
-                boolean inputRun = true;
-                while (inputRun) {
-                    try {
-                        int id = Utilities.getUserInput("Product ID of item to view: ");
+                try {
+                    int id = Utilities.getUserInput("Product ID of item to view: ");
 
-                        if (rows.contains(id)) {
-                            // fetches all orders that contain a product belonging to the inventory
-                            query = """
-                                    SELECT o.order_id, oi.quantity AS quantity_ordered,\s
-                                           o.total_amount AS total_amount_of_order, o.order_datetime
-                                    FROM Inventory i\s
-                                    JOIN Order_Item oi ON i.product_id = oi.product_id\s
-                                    JOIN Orders o ON o.order_id = oi.order_id\s
-                                    WHERE i.product_id = ?
-                                    ORDER BY oi.order_item_id;
-                                   \s""";
+                    if (rows.contains(id)) {
+                        // fetches all orders that contain a product belonging to the inventory
+                        query = """
+                                SELECT o.order_id, oi.quantity AS quantity_ordered, o.order_datetime
+                                FROM Inventory i\s
+                                JOIN Order_Item oi ON i.product_id = oi.product_id\s
+                                JOIN Orders o ON o.order_id = oi.order_id\s
+                                WHERE i.product_id = ?
+                                ORDER BY oi.order_item_id;
+                               \s""";
 
-                            try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
-                                detailStmt.setInt(1, id);     // 1 refers to the first ? in the query
-                                                              //  id is the value that will replace the placeholder (?) in the query
-                                try (ResultSet detailResult = detailStmt.executeQuery()) {
+                        try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
+                            detailStmt.setInt(1, id);     // 1 refers to the first ? in the query
+                                                          //  id is the value that will replace the placeholder (?) in the query
+                            try (ResultSet detailResult = detailStmt.executeQuery()) {
 
-                                    System.out.println("\nOrder Details for Product ID: " + id);
-                                    System.out.println("-".repeat(100));
-                                    System.out.printf("%-10s %-15s %-15s %-15s\n", "Order ID", "Quantity", "Total Amount", "Order Date");
-                                    System.out.println("-".repeat(100));
+                                System.out.println("\nOrder Details for Product ID: " + id);
+                                System.out.println("-".repeat(100));
+                                System.out.printf("%-10s %-15s %-15s\n", "Order ID", "Quantity", "Order Date");
+                                System.out.println("-".repeat(100));
 
-                                    //  flag to check if any records exist for the given product ID
-                                    boolean hasRecords = false;
+                                //  flag to check if any records exist for the given product ID
+                                boolean hasRecords = false;
 
-                                    while (detailResult.next()) {
-                                        hasRecords = true;
+                                while (detailResult.next()) {
+                                    hasRecords = true;
 
-                                        int orderId = detailResult.getInt("order_id");
-                                        int quantityOrdered = detailResult.getInt("quantity_ordered");
-                                        double totalAmount = detailResult.getDouble("total_amount_of_order");
-                                        String orderDate = detailResult.getString("order_datetime");
+                                    int orderId = detailResult.getInt("order_id");
+                                    int quantityOrdered = detailResult.getInt("quantity_ordered");
+                                    String orderDate = detailResult.getString("order_datetime");
 
-                                        System.out.printf("%-10d %-15d %-15.2f %-20s\n",
-                                                orderId, quantityOrdered, totalAmount, orderDate);
-                                    }
-
-                                    if (!hasRecords) {
-                                        System.out.println("No order records found for this product.");
-                                    }
-
-                                    System.out.println("-".repeat(100));
+                                    System.out.printf("%-10d %-15d %-20s\n",
+                                            orderId, quantityOrdered, orderDate);
                                 }
-                            }
 
-                            boolean validChoice = false;
-                            while (!validChoice) {
-                                int choice = Utilities.getUserInput("Continue viewing product records? (1 - yes, 2 - no): ");
-
-                                switch (choice) {
-                                    case 1 -> validChoice = true;
-                                    case 2 -> {
-                                        System.out.println("Exiting view products menu...");
-                                        programRun = false;
-                                        inputRun = false;
-                                        validChoice = true;
-                                    }
-                                    default -> System.out.println("Invalid choice. Please enter 1 or 2.");
+                                if (!hasRecords) {
+                                    System.out.println("No order records found for this product.");
                                 }
-                            }
 
-                        } else {    // throws an exception if the id is not in the rows list
-                            throw new InputMismatchException("Product ID not found.");
+                                System.out.println("-".repeat(100));
+                            }
                         }
-                    } catch (InputMismatchException e) {     // catches invalid input exceptions and prompts the user to try again
-                        System.out.println("Invalid input. Please try again.");
+
+                    } else {    // throws an exception if the id is not in the rows list
+                        throw new InputMismatchException("Product ID not found.");
                     }
+                } catch (InputMismatchException e) {     // catches invalid input exceptions and prompts the user to try again
+                    System.out.println("Invalid input. Please try again.");
                 }
 
             } catch (SQLException e) {   // handles SQL-related errors, such as invalid queries or database issues
                 System.out.println("Query error, edit MySQL database and try again.");
+            }
+
+            boolean validChoice = false;
+            while (!validChoice) {
+                int choice = Utilities.getUserInput("Continue viewing product records? (1 - yes, 2 - no): ");
+
+                switch (choice) {
+                    case 1 -> validChoice = true;
+                    case 2 -> {
+                        System.out.println("Exiting view products menu...");
+                        programRun = false;
+                        validChoice = true;
+                    }
+                    default -> System.out.println("Invalid choice. Please enter 1 or 2.");
+                }
             }
         }
     }
@@ -316,7 +310,7 @@ public class RestaurantRecordsMgt {
                         if (rows.contains(orderID)) {
                             // View an order and the inventory it affected
                             query = """
-                                        SELECT o.order_id, i.product_name, oi.quantity AS "quantity_ordered", 
+                                        SELECT o.order_id, i.product_name, oi.quantity AS "quantity_ordered",\s
                                         i.quantity AS "current_stock"\s
                                         FROM Orders o\s
                                         JOIN Order_Item oi ON o.order_id = oi.order_id\s
