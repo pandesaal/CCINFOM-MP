@@ -53,7 +53,7 @@ INSERT INTO Employee (first_name, last_name, role_id) VALUES
 
 CREATE TABLE IF NOT EXISTS Inventory (
     product_id INT AUTO_INCREMENT PRIMARY KEY,
-    product_name VARCHAR(255) NOT NULL,
+    product_name VARCHAR(255) NOT NULL UNIQUE KEY,
     category VARCHAR(255) NOT NULL CHECK (category IN ('Main Course', 'Desserts', 'Beverages', 'Sides')),
     make_price DECIMAL(10, 2) NOT NULL CHECK (make_price > 0),
     sell_price DECIMAL(10, 2) NOT NULL CHECK (sell_price > 0),
@@ -92,8 +92,8 @@ CREATE TABLE IF NOT EXISTS Customers (
     customer_id INT AUTO_INCREMENT PRIMARY KEY,
     lastname VARCHAR(50) NOT NULL,
     firstname VARCHAR(50) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    phonenumber VARCHAR(20) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE KEY,
+    phonenumber VARCHAR(20) NOT NULL UNIQUE KEY,
     address VARCHAR(200) NOT NULL
 );
 

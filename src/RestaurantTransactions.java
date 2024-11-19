@@ -302,7 +302,7 @@ public class RestaurantTransactions {
     }
 }
 
-        private void assignShift() {
+    private void assignShift() {
         boolean programRun = true;
 
         while (programRun) {
