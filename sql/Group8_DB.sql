@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS Employee (
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     role_id INT NOT NULL,
-    time_shiftid INT NOT NULL,
+    time_shiftid INT,
     FOREIGN KEY (role_id) REFERENCES Roles(role_id),
     FOREIGN KEY (time_shiftid) REFERENCES TimeShift(time_shiftid)
 );
