@@ -270,5 +270,119 @@ public class RestaurantRecordsMgt {
     }
 
     private void viewOrder() {
+        boolean programRun = true;
+        while (programRun) {
+             String query = "SELECT order_id, order_type, order_status FROM Orders;";
+             
+            try (PreparedStatement pstmt = connection.prepareStatement(query);
+            ResultSet resultSet = pstmt.executeQuery()) {
+    
+                // Creates an ArrayList to store orderID values from the query results
+                List<Integer> rows = new ArrayList<>();
+    
+                System.out.println("List of all orders: ");
+                /*
+                 ResultSet represents the result of a database query, 
+                 specifically the rows returned by an SQL SELECT statement.
+                 The cursor starts before the first row, call .next() to move
+                 it to the first row.*/
+                while (resultSet.next()) { // while may next row pa
+                    int orderID = resultSet.getInt("order_id");
+                    String orderType = resultSet.getString("order_type");
+                    String orderStatus = resultSet.getString("order_status");
+    
+                    /* Adds orderID to the rows list. This keeps track of all
+                       orderIDs retrieved, possibly for future operations.*/
+                    rows.add(orderID);
+    
+                    System.out.printf("Order ID: %d\n", orderID);
+                    System.out.printf("Order Type: %s\n", orderType);
+                    System.out.printf("Order Status: %s\n", orderStatus);
+                }
+           
+                boolean inputRun = true;
+                while (inputRun) {
+                    try {
+                        int orderID = Utilities.getUserInput("Order ID to view: ");
+    
+                        /*
+                        Checks if the user-provided id exists in the rows list
+                        throws an exception is ID is invalid */
+                        if (rows.contains(orderID)) {
+                            // View an order and the inventory it affected
+                            query = """
+                                        SELECT o.order_id, i.product_name, oi.quantity AS "quantity_ordered", 
+                                        o.total_amount AS "order_total", i.quantity AS "current_stock"\s
+                                        FROM Orders o\s
+                                        JOIN Order_Item oi ON o.order_id = oi.order_id\s
+                                        JOIN Inventory i ON i.product_id = oi.product_id\s
+                                        WHERE o.order_id = ?
+                                        ORDER BY o.order_id, i.product_name;
+                                       \s""";  
+    
+                            try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
+                                detailStmt.setInt(1, orderID);  // 1 refers to the first ? in the query
+                                                                //  id is the value that will replace the placeholder (?) in the query
+                                try (ResultSet detailResult = detailStmt.executeQuery()) {
+    
+                                    System.out.println("\nInventory affected by Order ID: " + orderID);
+                                    System.out.println("-".repeat(100));               
+                                    System.out.printf("%-10s %-25s %-10s %-15.2s %-10s\n",
+                                                      // left-aligned string (s) with a minimum width of 10 characters
+                                                      "Order ID", "Product Name", "Quantity Ordered", "Order Total", "Current Stock");
+                                                      // column headers for the table
+                                    System.out.println("-".repeat(100));
+    
+                                    //  flag to check if any records exist for the given order ID
+                                    boolean hasRecords = false;
+                                   /*
+                                    detailResult represents the rows returned by an SQL query.
+                                    while loop iterates through the rows */
+                                    while (detailResult.next()) {   // while may next row pa
+                                        hasRecords = true;
+    
+                                        int orderId = detailResult.getInt("order_id");
+                                        String productName = detailResult.getString("product_name");
+                                        int quantityOrdered = detailResult.getInt("quantity_ordered");
+                                        double orderTotal = detailResult.getDouble("order_total");
+                                        int currentStock = detailResult.getInt("current_stock");
+    
+    
+                                        System.out.printf("%-10s %-25s %-10s %-15.2s %-10s\n",
+                                           orderId, productName, quantityOrdered, orderTotal, currentStock);
+                                    }
+    
+                                    if (!hasRecords)
+                                        System.out.println("No order records found for this order.");
+    
+                                    System.out.println("-".repeat(100));  
+                                }
+                           }
+    
+                            boolean validChoice = false;
+                            while (!validChoice) {
+                                int choice = Utilities.getUserInput("Continue viewing order records? (1 - yes, 2 - no): ");
+    
+                                switch (choice) {
+                                    case 1 -> validChoice = true;
+                                    case 2 -> {
+                                        System.out.println("Exiting view order menu...");
+                                        programRun = false;
+                                        inputRun = false;
+                                        validChoice = true;
+                                    }
+                                    default -> System.out.println("Invalid choice. Please enter 1 or 2.");
+                                }
+                            }
+                        } else    // throws an exception if the id is not in the rows list
+                            throw new InputMismatchException("Order ID not found.");
+                    } catch (InputMismatchException e)  {    // catches invalid input exceptions and prompts the user to try again
+                        System.out.println("Invalid input. Please try again.");
+                      } 
+                }
+            }  catch (SQLException e) {   // handles SQL-related errors, such as invalid queries or database issues
+                        System.out.println("Query error, edit MySQL database and try again.");
+                }
+        }
     }
 }
