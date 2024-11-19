@@ -39,17 +39,17 @@ INSERT INTO TimeShift (shift_type, time_start, time_end) VALUES
 ('Afternoon', '12:00:00', '20:00:00'),
 ('Night', '20:00:00', '04:00:00');
 
-INSERT INTO Employee (first_name, last_name, role_id, time_shiftid) VALUES
-('John', 'Wick', 1, 1),
-('Sabrina', 'Carpenter', 2, 2),
-('Spongebob', 'Squarepants', 1, 3),
-('Bruno', 'Mars', 3, 1),
-('Jennie', 'Kim', 2, 3),
-('Ariana', 'Grande', 4, 2),
-('Nicki', 'Minaj', 5, 1),
-('Peter', 'Parker', 1, 2),
-('Donald', 'Trump', 3, 3),
-('Patrick', 'Star', 4, 1);
+INSERT INTO Employee (first_name, last_name, role_id) VALUES
+('John', 'Wick', 1),
+('Sabrina', 'Carpenter', 2),
+('Spongebob', 'Squarepants', 1),
+('Bruno', 'Mars', 3),
+('Jennie', 'Kim', 2),
+('Ariana', 'Grande', 4),
+('Nicki', 'Minaj', 5),
+('Peter', 'Parker', 1),
+('Donald', 'Trump', 3),
+('Patrick', 'Star', 4);
 
 CREATE TABLE IF NOT EXISTS Inventory (
     product_id INT AUTO_INCREMENT PRIMARY KEY,
