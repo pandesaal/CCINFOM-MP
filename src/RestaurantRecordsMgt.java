@@ -160,7 +160,7 @@ public class RestaurantRecordsMgt {
     private void viewCustomer() {
     }
 
-       private void viewEmployee() {
+    private void viewEmployee() {
         boolean programRun = true;
         while (programRun) {
             String query = "SELECT employee_id, first_name, last_name FROM Employee;";
