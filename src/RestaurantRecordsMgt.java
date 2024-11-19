@@ -297,7 +297,7 @@ public class RestaurantRecordsMgt {
     
                     System.out.printf("Order ID: %d\n", orderID);
                     System.out.printf("Order Type: %s\n", orderType);
-                    System.out.printf("Order Status: %s\n", orderStatus);
+                    System.out.printf("Order Status: %s\n\n", orderStatus);
                 }
            
                 boolean inputRun = true;
