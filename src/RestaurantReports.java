@@ -1,6 +1,8 @@
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.IllegalFormatException;
 import java.util.InputMismatchException;
+import java.util.List;
 
 public class RestaurantReports {
 
@@ -139,7 +141,7 @@ public class RestaurantReports {
                         Subquery determines the Top-Selling Product for each day 
                     */
                     query = """
-                            SELECT 
+                            SELECT\s
                                 DATE(o.order_datetime) AS sales_date,
                                 SUM(oi.quantity * i.sell_price) AS total_sales,
                                 AVG(oi.quantity * i.sell_price) AS average_sales,
@@ -148,7 +150,7 @@ public class RestaurantReports {
                             FROM Orders o
                             JOIN Order_Item oi ON o.order_id = oi.order_id
                             JOIN Inventory i ON oi.product_id = i.product_id
-                            
+                           \s
                             JOIN (
                                 SELECT DATE(o.order_datetime) AS sub_sales_date,
                                        oi.product_id,
@@ -163,7 +165,7 @@ public class RestaurantReports {
                             AS sub_query ON DATE(o.order_datetime) = sub_query.sub_sales_date
                             WHERE YEAR(o.order_datetime) = ? AND MONTH(o.order_datetime) = ?
                             GROUP BY DATE(o.order_datetime);
-                            """;
+                           \s""";
 
                     try (PreparedStatement statement = connection.prepareStatement(query)) {
                         statement.setInt(1, productID);
@@ -172,7 +174,7 @@ public class RestaurantReports {
                         try (ResultSet result = statement.executeQuery()) {
                             System.out.println("\nSales Report for Product ID: " + productID);
                             System.out.println("-".repeat(120));
-                            System.out.printf("%-15s %-15s %-15 %-15s %-15s\n",
+                            System.out.printf("%-15s %-15s %-15s %-15s %-15s\n",
                                     "Sales Date", "Total Sales", "Average Sales", "Top Selling Product (TSP)", "TSP Sales");
                             System.out.println("-".repeat(120));
 
@@ -188,7 +190,7 @@ public class RestaurantReports {
                                 double TSPsales = result.getDouble("top_selling_product_sales");
 
 
-                                System.out.printf("%-15d %-10.2f %-10.2f %-25d %-10.2f\n",
+                                System.out.printf("%-15s %-10.2f %-10.2f %-25s %-10.2f\n",
                                         salesDate, totalSales, averageSales, topSellingProduct, TSPsales);
                             }
                             if (!hasRecords) 
