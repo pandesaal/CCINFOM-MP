@@ -183,7 +183,7 @@ public class RestaurantReports {
                             while (result.next()) {
                                 hasRecords = true;
 
-                                String salesDate = resultSet.getString("sales_date");
+                                String salesDate = result.getString("sales_date");
                                 double totalSales = result.getDouble("total_sales");
                                 double averageSales = result.getDouble("average_sales");
                                 String topSellingProduct = result.getString("top_selling_product");
