@@ -152,7 +152,106 @@ public class RestaurantRecordsMgt {
     }
 
     private void viewCustomer() {
+    boolean programRun = true;
+    while (programRun) {
+        String query = "SELECT customer_id, first_name, last_name FROM Customer;";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query);
+             ResultSet resultSet = pstmt.executeQuery()) {
+
+            List<Integer> customerIds = new ArrayList<>();
+
+            System.out.println("List of all customers:");
+            boolean hasCustomers = false;
+
+            while (resultSet.next()) {
+                hasCustomers = true;
+                int id = resultSet.getInt("customer_id");
+                String firstName = resultSet.getString("first_name");
+                String lastName = resultSet.getString("last_name");
+
+                customerIds.add(id);
+                System.out.printf("[%d] %s %s\n", id, firstName, lastName);
+            }
+
+            if (!hasCustomers) {
+                System.out.println("No customers found.");
+                break;
+            }
+
+            boolean inputRun = true;
+            while (inputRun) {
+                try {
+                    int id = Utilities.getUserInput("Customer ID of customer to view: ");
+
+                    if (customerIds.contains(id)) {
+                        query = """
+                                SELECT c.first_name, c.last_name, o.order_id, o.order_type, o.order_datetime
+                                FROM Customer c
+                                JOIN Orders o ON c.customer_id = o.customer_id
+                                WHERE c.customer_id = ?
+                                ORDER BY o.order_datetime DESC;
+                                """;
+
+                        try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
+                            detailStmt.setInt(1, id);
+                            try (ResultSet detailResult = detailStmt.executeQuery()) {
+
+                                System.out.println("\nOrder History for Customer ID: " + id);
+                                System.out.println("-".repeat(100));
+                                System.out.printf("%-10s %-15s %-15s %-20s\n",
+                                        "Order ID", "Order Type", "Order Date");
+                                System.out.println("-".repeat(100));
+
+                                boolean hasRecords = false;
+                                while (detailResult.next()) {
+                                    hasRecords = true;
+
+                                    int orderId = detailResult.getInt("order_id");
+                                    String orderType = detailResult.getString("order_type");
+                                    String orderDate = detailResult.getString("order_datetime");
+
+                                    System.out.printf("%-10d %-15s %-20s\n", orderId, orderType, orderDate);
+                                }
+
+                                if (!hasRecords) {
+                                    System.out.println("No order history found for this customer.");
+                                }
+
+                                System.out.println("-".repeat(100));
+                            }
+                        }
+
+                        boolean validChoice = false;
+                        while (!validChoice) {
+                            int choice = Utilities.getUserInput("Continue viewing customer records? (1 - yes, 2 - no): ");
+
+                            switch (choice) {
+                                case 1 -> validChoice = true;
+                                case 2 -> {
+                                    System.out.println("Exiting view customer menu...");
+                                    programRun = false;
+                                    inputRun = false;
+                                    validChoice = true;
+                                }
+                                default -> System.out.println("Invalid choice. Please enter 1 or 2.");
+                            }
+                        }
+                    } else {
+                        throw new InputMismatchException("Customer ID not found.");
+                    }
+                } catch (InputMismatchException e) {
+                    System.out.println("Invalid input. Please try again.");
+                } catch (SQLException e) {
+                    System.out.println("Database error: " + e.getMessage());
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Query error: " + e.getMessage());
+        }
     }
+}
+
 
     private void viewEmployee() {
         boolean programRun = true;
