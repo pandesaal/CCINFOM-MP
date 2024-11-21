@@ -245,95 +245,104 @@ public class RestaurantReports {
         }
     }
 
-    private void showEmployeeShiftReport() {
-    //TODO: Number of shifts per employee and total hours worked within a given year and month.
-        boolean programRun = true;    
-        while (programRun) {
-            
-            int year = 0, month = 0;
+private void showCustomerOrderReport() {
+    boolean programRun = true;
+    while (programRun) {
+        try {
+            String date = "";
+
             boolean validInputs = false;
+            while (!validInputs) {
+                int day = Utilities.getUserInput("Enter day (0 to skip): ");
+                int month = Utilities.getUserInput("Enter month (0 to skip): ");
+                int year = Utilities.getUserInput("Enter year (0 to skip): ");
 
-                while (!validInputs) {
-                        try {
-                            year = Utilities.getUserInput("Enter year (0 if skip): ");
-                            month = Utilities.getUserInput("Enter month (0 if skip): ");
-                            if (year < 0 || month < 0 || month > 12) throw new InputMismatchException();
+                if (day < 0 || month < 0 || year < 0) throw new InputMismatchException();
+                if (day != 0 && month != 0 && year != 0) { //iIf complete date is provided
+                    date = Date.valueOf(String.format("%d-%02d-%02d", year, month, day)).toString();
+                } else { // partial date filter
+                    String yearStr = year == 0 ? "%" : String.format("%04d", year);
+                    String monthStr = month == 0 ? "%" : String.format("%02d", month);
+                    String dayStr = day == 0 ? "%" : String.format("%02d", day);
 
-                            validInputs = true;
-                        } catch (InputMismatchException e) {
-                            System.out.println("Invalid input. Please try again.");
-                        }
+                    date = String.format("%s-%s-%s", yearStr, monthStr, dayStr);
                 }
+                validInputs = true;
+            }
 
-                String query = """
-                SELECT
-                    e.employee_id,
-                    e.first_name,
-                    e.last_name,
-                    COUNT(a.order_id) AS num_of_shifts,
-                    (COUNT(a.order_id) * TIMESTAMPDIFF(HOUR, ts.time_start, ts.time_end)) AS total_hours_worked
-                FROM
-                    Employee e
-                JOIN
-                    Assigned_Employee_to_Order a ON e.employee_id = a.employee_id
-                JOIN
-                    Orders o ON a.order_id = o.order_id
-                JOIN
-                    TimeShift ts ON e.time_shiftid = ts.time_shiftid
-                WHERE
-                    YEAR(o.order_datetime) = ?
-                    AND MONTH(o.order_datetime) = ?
-                GROUP BY
-                    e.employee_id, e.first_name, e.last_name, ts.time_start, ts.time_end
-                """;
+            String query = """
+                    SELECT 
+                        CONCAT(c.firstname, ' ', c.lastname) AS customer_name,
+                        o.order_id,
+                        o.order_datetime,
+                        i.product_name,
+                        oi.quantity,
+                        (oi.quantity * i.sell_price) AS total_price
+                    FROM Orders o
+                    JOIN Customers c ON o.customer_id = c.customer_id
+                    JOIN Order_Item oi ON o.order_id = oi.order_id
+                    JOIN Inventory i ON oi.product_id = i.product_id
+                    WHERE o.order_datetime LIKE ?
+                    ORDER BY o.order_datetime DESC;
+                    """;
 
-                    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-                        pstmt.setInt(1, year);
-                        pstmt.setInt(2, month);
+            try (PreparedStatement statement = connection.prepareStatement(query)) {
+                statement.setString(1, date + "%");
 
-                        try (ResultSet resultSet = pstmt.executeQuery()) {
-                            List<Integer> rows = new ArrayList<>();
-                            System.out.println("Employee Shift Report: ");
-                            System.out.printf("%-10s %-15s %-15s %-15s %-15s\n", "Emp ID", "First Name", "Last Name", "Shifts", "Total Hours");
-                            System.out.println("-".repeat(100));
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    System.out.println("\nCustomer Order Report:");
+                    System.out.println("-".repeat(100));
+                    System.out.printf("%-25s %-10s %-20s %-20s %-10s %-10s\n",
+                            "Customer Name", "Order ID", "Order Date", "Product", "Quantity", "Total Price");
+                    System.out.println("-".repeat(100));
 
-                            while (resultSet.next()) {
-                                int employeeId = resultSet.getInt("employee_id");
-                                String firstName = resultSet.getString("first_name");
-                                String lastName = resultSet.getString("last_name");
-                                int numOfShifts = resultSet.getInt("num_of_shifts");
-                                int totalHoursWorked = resultSet.getInt("total_hours_worked");
+                    boolean hasRecords = false;
 
-                                rows.add(employeeId);
-                                System.out.printf("%-10d %-15s %-15s %-15d %-15d\n", employeeId, firstName, lastName, numOfShifts, totalHoursWorked);
-                            }
+                    while (resultSet.next()) {
+                        hasRecords = true;
 
-                            if (rows.isEmpty()) {
-                                System.out.println("No shift records found for the specified period.");
-                            }
-                            System.out.println("-".repeat(100));
+                        String customerName = resultSet.getString("customer_name");
+                        int orderId = resultSet.getInt("order_id");
+                        Timestamp orderDateTime = resultSet.getTimestamp("order_datetime");
+                        String productName = resultSet.getString("product_name");
+                        int quantity = resultSet.getInt("quantity");
+                        double totalPrice = resultSet.getDouble("total_price");
 
-                            boolean validChoice = false;
-                            while (!validChoice) {
-                                int choice = Utilities.getUserInput("Continue viewing shift report? (1 - yes, 2 - no): ");
-                                switch (choice) {
-                                    case 1 -> validChoice = true;
-                                    case 2 -> {
-                                        System.out.println("Exiting shift report menu...");
-                                        programRun = false;
-                                        validChoice = true;
-                                    }
-                                    default -> System.out.println("Invalid choice. Please enter 1 or 2.");
-                                }
-                            }
-                        }
-                    } catch (SQLException e) {
-                        System.out.println("Query error, edit MySQL database and try again.");
-                    } catch (InputMismatchException e) {
-                        System.out.println("Invalid input. Please try again.");
+                        System.out.printf("%-25s %-10d %-20s %-20s %-10d %-10.2f\n",
+                                customerName, orderId, orderDateTime.toString(), productName, quantity, totalPrice);
                     }
+
+                    if (!hasRecords) 
+                        System.out.println("No orders found for the specified date.");
+                    
+                    System.out.println("-".repeat(100));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Query error: " + e.getMessage());
+        } catch (InputMismatchException e) {
+            System.out.println("Invalid input. Please enter valid numeric values.");
+        } catch (IllegalArgumentException e) {
+            System.out.println("Date entered is not valid. Please try again.");
+        }
+
+        boolean validChoice = false;
+        while (!validChoice) {
+            int choice = Utilities.getUserInput("Continue viewing customer order report? (1 - Yes, 2 - No): ");
+            switch (choice) {
+                case 1 -> validChoice = true;
+                case 2 -> {
+                    System.out.println("Exiting customer order report menu...");
+                    programRun = false;
+                    validChoice = true;
+                }
+                default -> System.out.println("Invalid choice. Please enter 1 or 2.");
+            }
         }
     }
+}
+
+
 
 
     private void showProfitMarginReport() {
