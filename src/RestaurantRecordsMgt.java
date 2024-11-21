@@ -19,7 +19,7 @@ public class RestaurantRecordsMgt {
             System.out.println("[2] View a customer record and their order history");
             System.out.println("[3] View an employee and the shifts assigned to them");
             System.out.println("[4] View an order and the inventory it affected");
-            System.out.println("[5] Exit Program");
+            System.out.println("[5] Exit Records Management");
 
             inputRun = true;
             while (inputRun) {
@@ -98,7 +98,7 @@ public class RestaurantRecordsMgt {
 
                                 System.out.println("\nOrder Details for Product ID: " + id);
                                 System.out.println("-".repeat(100));
-                                System.out.printf("%-10s %-20s %-15s\n", "Order ID", "Quantity Ordered", "Order Date");
+                                System.out.printf("%-10s %-20s %-15s\n", "Order ID", "Quantity Ordered", "Order Timestamp");
                                 System.out.println("-".repeat(100));
 
                                 //  flag to check if any records exist for the given product ID
@@ -199,7 +199,7 @@ public class RestaurantRecordsMgt {
 
                                 System.out.println("\nOrder History for Customer ID: " + id);
                                 System.out.println("-".repeat(100));
-                                System.out.printf("%-10s %-15s %-15s %-20s\n",
+                                System.out.printf("%-10s %-15s %-20s\n",
                                         "Order ID", "Order Type", "Order Date");
                                 System.out.println("-".repeat(100));
 
@@ -393,9 +393,7 @@ public class RestaurantRecordsMgt {
                        orderIDs retrieved, possibly for future operations.*/
                     rows.add(orderID);
     
-                    System.out.printf("Order ID: %d\n", orderID);
-                    System.out.printf("Order Type: %s\n", orderType);
-                    System.out.printf("Order Status: %s\n\n", orderStatus);
+                    System.out.printf("[%d] %s (%s)\n\n", orderID, orderType, orderStatus);
                 }
            
                 boolean inputRun = true;
@@ -425,9 +423,9 @@ public class RestaurantRecordsMgt {
     
                                     System.out.println("\nInventory affected by Order ID: " + orderID);
                                     System.out.println("-".repeat(100));               
-                                    System.out.printf("%-10s %-25s %-10s %-10s\n",
+                                    System.out.printf("%-10s %-30s %-20s %-20s\n",
                                                       // left-aligned string (s) with a minimum width of 10 characters
-                                                      "Order ID", "Product Name", "Quantity Ordered", "Current Stock");
+                                                      "Order ID", "Product Name", "Quantity Ordered", "Current Stock (after order was made)");
                                                       // column headers for the table
                                     System.out.println("-".repeat(100));
     
@@ -438,14 +436,13 @@ public class RestaurantRecordsMgt {
                                     while loop iterates through the rows */
                                     while (detailResult.next()) {   // while may next row pa
                                         hasRecords = true;
-    
-                                        int orderId = detailResult.getInt("order_id");
+
                                         String productName = detailResult.getString("product_name");
                                         int quantityOrdered = detailResult.getInt("quantity_ordered");
                                         int currentStock = detailResult.getInt("current_stock");
                                         
-                                        System.out.printf("%-10s %-25s %-10s %-10s\n",
-                                           orderId, productName, quantityOrdered, currentStock);
+                                        System.out.printf("%-30s %-20s %-10s\n",
+                                           productName, quantityOrdered, currentStock);
                                     }
     
                                     if (!hasRecords)

@@ -67,12 +67,13 @@ public class RestaurantTransactions {
     
         boolean programRun = true;
             while (programRun) {
+                System.out.println("Food categories:");
+                System.out.println("[1] Main Course");
+                System.out.println("[2] Desserts");
+                System.out.println("[3] Beverages");
+                System.out.println("[4] Sides");
+
                 try {
-                    System.out.println("Food categories:");
-                    System.out.println("[1] Main Course");
-                    System.out.println("[2] Desserts");
-                    System.out.println("[3] Beverages");
-                    System.out.println("[4] Sides");
                     int category = Utilities.getUserInput("Enter category to order: ");
                     String categoryTxt = switch (category){
                         case 1 -> "Main Course";
@@ -88,7 +89,7 @@ public class RestaurantTransactions {
                         ResultSet resultSet = preparedStatement.executeQuery();
                         List<List<Object>> rows = new ArrayList<>();
     
-                        System.out.printf("Dishes in %s category: ", categoryTxt);
+                        System.out.printf("Dishes in %s category: \n", categoryTxt);
                         while (resultSet.next()) {
                             int productID = resultSet.getInt("product_id");
                             String name = resultSet.getString("product_name");
@@ -97,7 +98,7 @@ public class RestaurantTransactions {
     
                             rows.add(List.of(productID, name, qty, sellPrice));
     
-                            System.out.printf("\n[%d] %s (STOCK: %d, PRICE: %f)", productID, name, qty, sellPrice);
+                            System.out.printf("[%d] %s (STOCK: %d, PRICE: %.2f)\n", productID, name, qty, sellPrice);
                         }
 
                         int productID = Utilities.getUserInput("Product ID of item to order: ");
@@ -210,7 +211,8 @@ public class RestaurantTransactions {
                     }
                 } catch (SQLException e) {
                     System.out.println("Error processing order: " + e.getMessage());
-                    } catch (InputMismatchException e) {
+                }
+                catch (InputMismatchException e) {
                     System.out.println("Invalid input, try again.");
                 }
             }
@@ -470,7 +472,7 @@ public class RestaurantTransactions {
                                 FROM Employee e
                                 JOIN Roles r ON e.role_id = r.role_id
                                 WHERE e.time_shiftid IS NULL
-                                ORDER BY role_name;
+                                ORDER BY employee_id;
                                 """;
 
                 List<List<Object>> employeesWithoutShift = new ArrayList<>();
@@ -488,7 +490,7 @@ public class RestaurantTransactions {
                         employeesWithoutShift.add(List.of(id, firstName, lastName, roleName));
                         System.out.printf("[%d] %s %s (%s)\n", id, firstName, lastName, roleName);
                     }
-                    System.out.println("[0] Exit");
+                    System.out.println("\n[0] Exit");
 
                     if (employeesWithoutShift.isEmpty()) {
                         System.out.println("No employees without a shift found. Exiting...");
