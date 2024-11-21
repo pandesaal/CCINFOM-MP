@@ -151,8 +151,9 @@ public class RestaurantRecordsMgt {
         }
     }
 
-    private void viewCustomer() {
+private void viewCustomer() {
     boolean programRun = true;
+
     while (programRun) {
         String query = "SELECT customer_id, first_name, last_name FROM Customers;";
 
@@ -162,16 +163,19 @@ public class RestaurantRecordsMgt {
             List<Integer> customerIds = new ArrayList<>();
 
             System.out.println("List of all customers:");
+            System.out.println("-".repeat(50));
+            System.out.printf("%-10s %-20s\n", "Customer ID", "Name");
+            System.out.println("-".repeat(50));
+
             boolean hasCustomers = false;
 
             while (resultSet.next()) {
                 hasCustomers = true;
                 int id = resultSet.getInt("customer_id");
-                String firstName = resultSet.getString("first_name");
-                String lastName = resultSet.getString("last_name");
+                String name = resultSet.getString("first_name") + " " + resultSet.getString("last_name");
 
                 customerIds.add(id);
-                System.out.printf("[%d] %s %s\n", id, firstName, lastName);
+                System.out.printf("%-10d %-20s\n", id, name);
             }
 
             if (!hasCustomers) {
@@ -179,15 +183,17 @@ public class RestaurantRecordsMgt {
                 break;
             }
 
+            System.out.println("-".repeat(50));
             boolean inputRun = true;
+
             while (inputRun) {
                 try {
-                    int id = Utilities.getUserInput("Customer ID of customer to view: ");
+                    int id = Utilities.getUserInput("Enter Customer ID to view: ");
 
                     if (customerIds.contains(id)) {
                         query = """
                                 SELECT c.first_name, c.last_name, o.order_id, o.order_type, o.order_datetime
-                                FROM Customer c
+                                FROM Customers c
                                 JOIN Orders o ON c.customer_id = o.customer_id
                                 WHERE c.customer_id = ?
                                 ORDER BY o.order_datetime DESC;
@@ -195,15 +201,15 @@ public class RestaurantRecordsMgt {
 
                         try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
                             detailStmt.setInt(1, id);
-                            try (ResultSet detailResult = detailStmt.executeQuery()) {
 
+                            try (ResultSet detailResult = detailStmt.executeQuery()) {
                                 System.out.println("\nOrder History for Customer ID: " + id);
-                                System.out.println("-".repeat(100));
-                                System.out.printf("%-10s %-15s %-20s\n",
-                                        "Order ID", "Order Type", "Order Date");
-                                System.out.println("-".repeat(100));
+                                System.out.println("-".repeat(70));
+                                System.out.printf("%-10s %-15s %-20s\n", "Order ID", "Order Type", "Order Date");
+                                System.out.println("-".repeat(70));
 
                                 boolean hasRecords = false;
+
                                 while (detailResult.next()) {
                                     hasRecords = true;
 
@@ -218,7 +224,7 @@ public class RestaurantRecordsMgt {
                                     System.out.println("No order history found for this customer.");
                                 }
 
-                                System.out.println("-".repeat(100));
+                                System.out.println("-".repeat(70));
                             }
                         }
 
@@ -241,7 +247,7 @@ public class RestaurantRecordsMgt {
                         throw new InputMismatchException("Customer ID not found.");
                     }
                 } catch (InputMismatchException e) {
-                    System.out.println("Invalid input. Please try again.");
+                    System.out.println("Error: " + e.getMessage());
                 } catch (SQLException e) {
                     System.out.println("Database error: " + e.getMessage());
                 }
@@ -251,6 +257,7 @@ public class RestaurantRecordsMgt {
         }
     }
 }
+
 
 
     private void viewEmployee() {
