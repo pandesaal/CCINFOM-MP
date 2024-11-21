@@ -68,7 +68,19 @@ public class RestaurantTransactions {
         boolean programRun = true;
             while (programRun) {
                 try {
+                    System.out.println("Food categories:");
+                    System.out.println("[1] Main Course");
+                    System.out.println("[2] Desserts");
+                    System.out.println("[3] Beverages");
+                    System.out.println("[4] Sides");
                     int category = Utilities.getUserInput("Enter category to order: ");
+                    String categoryTxt = switch (category){
+                        case 1 -> "Main Course";
+                        case 2 -> "Desserts";
+                        case 3 -> "Beverages";
+                        case 4 -> "Sides";
+                        default -> throw new InputMismatchException();
+                    };
     
                     String query = "SELECT * FROM Inventory WHERE category = ?";
                     try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -76,7 +88,7 @@ public class RestaurantTransactions {
                         ResultSet resultSet = preparedStatement.executeQuery();
                         List<List<Object>> rows = new ArrayList<>();
     
-                        System.out.printf("Dishes in %s category: ", category);
+                        System.out.printf("Dishes in %s category: ", categoryTxt);
                         while (resultSet.next()) {
                             int productID = resultSet.getInt("product_id");
                             String name = resultSet.getString("product_name");
@@ -87,7 +99,7 @@ public class RestaurantTransactions {
     
                             System.out.printf("\n[%d] %s (STOCK: %d, PRICE: %f)", productID, name, qty, sellPrice);
                         }
-                        
+
                         int productID = Utilities.getUserInput("Product ID of item to order: ");
                         List<Object> row = rows.stream() // Converts rows (Object datatype) into a stream
                                 .filter(r -> (int) r.getFirst() == productID) // Filters the stream of rows to find entries where the first element (r.getFirst()) matches the given id
@@ -104,7 +116,7 @@ public class RestaurantTransactions {
                             } while(updatedQuantity < 0);
                             
                             do {
-                                System.out.printf("1 - Dine-in\n2 - Takeout\n3 - Delivery\n");
+                                System.out.print("1 - Dine-in\n2 - Takeout\n3 - Delivery\n");
                                 orderType = Utilities.getUserInput("Order type: ");        
                             } while(orderType < 1 || orderType > 3);
                             
@@ -160,14 +172,13 @@ public class RestaurantTransactions {
                                         System.out.printf("Successfully updated the %s entry.\n", row.get(1));
                                     }
                                     query = """
-                                            INSERT INTO Orders (order_id, order_datetime, order_type, order_status)
-                                            VALUES (?, ?, ?, ?);
+                                            INSERT INTO Orders (order_datetime, order_type, order_status)
+                                            VALUES (?, ?, ?);
                                             """;
                                     try (PreparedStatement orderPstmt = connection.prepareStatement(query)) {
-                                        orderPstmt.setInt(1, orderId);
-                                        orderPstmt.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
-                                        orderPstmt.setInt(3, orderType);
-                                        orderPstmt.setString(4, "In Progress");
+                                        orderPstmt.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+                                        orderPstmt.setInt(2, orderType);
+                                        orderPstmt.setString(3, "In Progress");
     
                                         orderPstmt.executeUpdate();
                                     }
@@ -176,12 +187,13 @@ public class RestaurantTransactions {
                                     for (int employeeID : employeesAssigned) {
                                         query = """
                                             INSERT INTO Assigned_Employee_to_Order (order_id, employee_id)
-                                            VALUES (?, ?);
+                                            VALUES ((SELECT order_id
+                                            FROM Orders
+                                            ORDER BY order_id DESC
+                                            LIMIT 1), ?);
                                             """;
                                         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-                                            pstmt.setInt(1, orderId);
-                                            pstmt.setInt(2, employeeID);
-    
+                                            pstmt.setInt(1, employeeID);
                                             pstmt.executeUpdate();
                                         } catch (SQLException e) {
                                             System.out.println("Error inserting assigned employee: " + e.getMessage());
@@ -198,7 +210,9 @@ public class RestaurantTransactions {
                     }
                 } catch (SQLException e) {
                     System.out.println("Error processing order: " + e.getMessage());
-                    }
+                    } catch (InputMismatchException e) {
+                    System.out.println("Invalid input, try again.");
+                }
             }
     
     }
@@ -351,7 +365,7 @@ public class RestaurantTransactions {
                     try {
                         int orderId = Utilities.getUserInput("Enter Order ID to process payment: ");
                         List<Object> order = orders.stream()
-                                                    .filter(o -> (int) o.get(0) == orderId)
+                                                    .filter(o -> (int) o.getFirst() == orderId)
                                                     .findFirst()
                                                     .orElse(null);
 

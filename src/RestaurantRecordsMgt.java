@@ -98,7 +98,7 @@ public class RestaurantRecordsMgt {
 
                                 System.out.println("\nOrder Details for Product ID: " + id);
                                 System.out.println("-".repeat(100));
-                                System.out.printf("%-10s %-15s %-15s\n", "Order ID", "Quantity", "Order Date");
+                                System.out.printf("%-10s %-20s %-15s\n", "Order ID", "Quantity Ordered", "Order Date");
                                 System.out.println("-".repeat(100));
 
                                 //  flag to check if any records exist for the given product ID
@@ -111,7 +111,7 @@ public class RestaurantRecordsMgt {
                                     int quantityOrdered = detailResult.getInt("quantity_ordered");
                                     String orderDate = detailResult.getString("order_datetime");
 
-                                    System.out.printf("%-10d %-15d %-20s\n",
+                                    System.out.printf("%-10d %-20d %-20s\n",
                                             orderId, quantityOrdered, orderDate);
                                 }
 
@@ -127,7 +127,7 @@ public class RestaurantRecordsMgt {
                         throw new InputMismatchException("Product ID not found.");
                     }
                 } catch (InputMismatchException e) {     // catches invalid input exceptions and prompts the user to try again
-                    System.out.println("Invalid input. Please try again.");
+                    System.out.println(e.getMessage());
                 }
 
             } catch (SQLException e) {   // handles SQL-related errors, such as invalid queries or database issues
@@ -154,7 +154,7 @@ public class RestaurantRecordsMgt {
     private void viewCustomer() {
     boolean programRun = true;
     while (programRun) {
-        String query = "SELECT customer_id, first_name, last_name FROM Customer;";
+        String query = "SELECT customer_id, first_name, last_name FROM Customers;";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query);
              ResultSet resultSet = pstmt.executeQuery()) {
