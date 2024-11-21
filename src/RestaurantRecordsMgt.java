@@ -17,7 +17,7 @@ public class RestaurantRecordsMgt {
             System.out.println("\nRMS Records Management Queries");
             System.out.println("[1] View a product record and the list of orders containing that product");
             System.out.println("[2] View a customer record and their order history");
-            System.out.println("[3] View an employee and the shifts assigned to them");
+            System.out.println("[3] View an employee and the shift assigned to them");
             System.out.println("[4] View an order and the inventory it affected");
             System.out.println("[5] Exit Records Management");
 
@@ -320,7 +320,7 @@ public class RestaurantRecordsMgt {
                                         Time endTime = detailResult.getTime("time_end");
 
                                         // Display NULL or empty fields as "N/A"
-                                        System.out.printf("%-10d %-15s %-15s %-20s %-20s %-20s %-20s\n",
+                                        System.out.printf(" %-10d %-15s %-15s %-20s %-20s %-20s %-20s\n",
                                                 id,
                                                 firstName != null ? firstName : "N/A",
                                                 lastName != null ? lastName : "N/A",
