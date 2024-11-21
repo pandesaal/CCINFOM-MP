@@ -18,7 +18,7 @@ public class RestaurantTransactions {
             System.out.println("[1] Place an Order");
             System.out.println("[2] Restock Inventory");
             System.out.println("[3] Process Payment");
-            System.out.println("[4] Assign Shift to Employee");
+            System.out.println("[4] Manage Employee Shifts");
             System.out.println("[5] Exit Transactions Menu");
 
             inputRun = true;
