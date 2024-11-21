@@ -106,41 +106,47 @@ public class RestaurantReports {
             }
             
             /*
-                Main query pulls data related to daily sales for a given year and month.
+                Main query pulls data related to daily sales for a given date.
                 It groups data by DATE(o.order_datetime) which allows us to group by each day of the month.
             
                 Subquery determines the Top-Selling Product for each day 
             */
             query = """
-                    SELECT\s
+                    SELECT 
                         DATE(o.order_datetime) AS sales_date,
                         SUM(oi.quantity * i.sell_price) AS total_sales,
                         AVG(oi.quantity * i.sell_price) AS average_sales,
                         sub_query.product_name AS top_selling_product,
-                        MAX(sub_query.product_sales) AS top_selling_product_sales
+                        sub_query.product_sales AS top_selling_product_sales
                     FROM Orders o
                     JOIN Order_Item oi ON o.order_id = oi.order_id
                     JOIN Inventory i ON oi.product_id = i.product_id
-                   \s
                     JOIN (
-                        SELECT DATE(o.order_datetime) AS sub_sales_date,
-                               oi.product_id,
-                               i.product_name,
-                               SUM(oi.quantity * i.sell_price) AS product_sales
-                        FROM Orders o
-                        JOIN Order_Item oi ON o.order_id = oi.order_id
-                        JOIN Inventory i ON oi.product_id = i.product_id
-                        WHERE YEAR(o.order_datetime) = ? AND MONTH(o.order_datetime) = ?
-                        GROUP BY DATE(o.order_datetime), oi.product_id
-                    )
-                    AS sub_query ON DATE(o.order_datetime) = sub_query.sub_sales_date
-                    WHERE YEAR(o.order_datetime) = ? AND MONTH(o.order_datetime) = ?
-                    GROUP BY DATE(o.order_datetime);
-                   \s""";
-
-            try (PreparedStatement statement = connection.prepareStatement(query)) {
-                statement.setInt(1, productID);
-                statement.setString(2, date);
+                        SELECT 
+                            DATE(o.order_datetime) AS sub_sales_date,
+                            i.product_name,
+                            MAX(product_sales) AS product_sales
+                        FROM (
+                            SELECT 
+                                DATE(o.order_datetime) AS sub_sales_date,
+                                oi.product_id,
+                                i.product_name,
+                                SUM(oi.quantity * i.sell_price) AS product_sales
+                            FROM Orders o
+                            JOIN Order_Item oi ON o.order_id = oi.order_id
+                            JOIN Inventory i ON oi.product_id = i.product_id
+                            WHERE o.order_datetime LIKE ?
+                            GROUP BY DATE(o.order_datetime), oi.product_id, i.product_name
+                        ) AS daily_products
+                        GROUP BY sub_sales_date, i.product_name
+                    ) AS sub_query ON DATE(o.order_datetime) = sub_query.sub_sales_date
+                    WHERE o.order_datetime LIKE ?
+                    GROUP BY DATE(o.order_datetime), sub_query.product_name, sub_query.product_sales;
+                    """;
+            
+                try (PreparedStatement statement = connection.prepareStatement(query)) {
+                    statement.setString(1, date + "%");
+                    statement.setString(2, date + "%");
 
                 try (ResultSet result = statement.executeQuery()) {
                     System.out.println("\nSales Report for Product ID: " + productID);
