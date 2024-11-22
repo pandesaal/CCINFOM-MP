@@ -45,7 +45,7 @@ public class Utilities {
                 choice = Integer.parseInt(sc.nextLine().trim());
                 validInput = true;
             } catch (NumberFormatException e) {
-                System.out.println("Invalid input.");
+                System.out.println("Invalid input. Please try again.");
             }
         }
         return choice;

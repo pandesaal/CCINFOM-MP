@@ -19,7 +19,7 @@ public class RestaurantTransactions {
             System.out.println("[2] Restock Inventory");
             System.out.println("[3] Process Payment");
             System.out.println("[4] Manage Employee Shifts");
-            System.out.println("[5] Exit Transactions Menu");
+            System.out.println("[5] Exit Transactions");
 
             inputRun = true;
             while (inputRun) {
@@ -66,157 +66,157 @@ public class RestaurantTransactions {
     */
     
         boolean programRun = true;
-            while (programRun) {
-                System.out.println("Food categories:");
-                System.out.println("[1] Main Course");
-                System.out.println("[2] Desserts");
-                System.out.println("[3] Beverages");
-                System.out.println("[4] Sides");
+        while (programRun) {
+            System.out.println("\nFood categories:");
+            System.out.println("[1] Main Course");
+            System.out.println("[2] Desserts");
+            System.out.println("[3] Beverages");
+            System.out.println("[4] Sides");
 
-                try {
-                    int category = Utilities.getUserInput("Enter category to order: ");
-                    String categoryTxt = switch (category){
-                        case 1 -> "Main Course";
-                        case 2 -> "Desserts";
-                        case 3 -> "Beverages";
-                        case 4 -> "Sides";
-                        default -> throw new InputMismatchException();
-                    };
-    
-                    String query = "SELECT * FROM Inventory WHERE category = ?";
-                    try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-                        preparedStatement.setInt(1, category);
-                        ResultSet resultSet = preparedStatement.executeQuery();
-                        List<List<Object>> rows = new ArrayList<>();
-    
-                        System.out.printf("Dishes in %s category: \n", categoryTxt);
-                        while (resultSet.next()) {
-                            int productID = resultSet.getInt("product_id");
-                            String name = resultSet.getString("product_name");
-                            int qty = resultSet.getInt("quantity");
-                            double sellPrice = resultSet.getDouble("sell_price");
-    
-                            rows.add(List.of(productID, name, qty, sellPrice));
-    
-                            System.out.printf("[%d] %s (STOCK: %d, PRICE: %.2f)\n", productID, name, qty, sellPrice);
+            try {
+                int category = Utilities.getUserInput("Enter category to order: ");
+                String categoryTxt = switch (category){
+                    case 1 -> "Main Course";
+                    case 2 -> "Desserts";
+                    case 3 -> "Beverages";
+                    case 4 -> "Sides";
+                    default -> throw new InputMismatchException();
+                };
+
+                String query = "SELECT * FROM Inventory WHERE category = ?";
+                try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                    preparedStatement.setInt(1, category);
+                    ResultSet resultSet = preparedStatement.executeQuery();
+                    List<List<Object>> rows = new ArrayList<>();
+
+                    System.out.printf("Dishes in %s category: \n", categoryTxt);
+                    while (resultSet.next()) {
+                        int productID = resultSet.getInt("product_id");
+                        String name = resultSet.getString("product_name");
+                        int qty = resultSet.getInt("quantity");
+                        double sellPrice = resultSet.getDouble("sell_price");
+
+                        rows.add(List.of(productID, name, qty, sellPrice));
+
+                        System.out.printf("[%d] %s (STOCK: %d, PRICE: %.2f)\n", productID, name, qty, sellPrice);
+                    }
+
+                    int productID = Utilities.getUserInput("Product ID of item to order: ");
+                    List<Object> row = rows.stream() // Converts rows (Object datatype) into a stream
+                            .filter(r -> (int) r.getFirst() == productID) // Filters the stream of rows to find entries where the first element (r.getFirst()) matches the given id
+                            .findFirst()
+                            .orElse(null); // null if not found
+
+                    if (row != null) {
+
+                        int orderQty, updatedQuantity, orderType;
+
+                        do {
+                            orderQty = Utilities.getUserInput("Amount to order: ");
+                            updatedQuantity = (int) row.get(2) - orderQty; // subtract orderQty from the current stock quantity
+                        } while(updatedQuantity < 0);
+
+                        do {
+                            System.out.print("1 - Dine-in\n2 - Takeout\n3 - Delivery\n");
+                            orderType = Utilities.getUserInput("Order type: ");
+                        } while(orderType < 1 || orderType > 3);
+
+                        int numOfEmployees = Utilities.getUserInput("Number of employees assigned to order: ");
+                        ArrayList<Integer> employeesAssigned = new ArrayList<>();
+
+
+
+                        Set<Integer> validEmployeeIds = new HashSet<>();
+                        // hash set to store values from a table
+                        // stores elements in an unordered fashion with no duplicates.
+                        query = "SELECT employee_id FROM Employee;";
+                        try (PreparedStatement employeePstmt = connection.prepareStatement(query)) {
+                            ResultSet employeeResultSet = employeePstmt.executeQuery();
+
+                            while (employeeResultSet.next()) {
+                                validEmployeeIds.add(employeeResultSet.getInt("employee_id"));
+                            }
+                        } catch (SQLException e) {
+                            System.out.println("Error fetching employee data. Please try again later.");
                         }
 
-                        int productID = Utilities.getUserInput("Product ID of item to order: ");
-                        List<Object> row = rows.stream() // Converts rows (Object datatype) into a stream
-                                .filter(r -> (int) r.getFirst() == productID) // Filters the stream of rows to find entries where the first element (r.getFirst()) matches the given id
-                                .findFirst()
-                                .orElse(null); // null if not found
-    
-                        if (row != null) {
-                            
-                            int orderQty, updatedQuantity, orderType;
-                            
-                            do {
-                                orderQty = Utilities.getUserInput("Amount to order: ");
-                                updatedQuantity = (int) row.get(2) - orderQty; // subtract orderQty from the current stock quantity                                   
-                            } while(updatedQuantity < 0);
-                            
-                            do {
-                                System.out.print("1 - Dine-in\n2 - Takeout\n3 - Delivery\n");
-                                orderType = Utilities.getUserInput("Order type: ");        
-                            } while(orderType < 1 || orderType > 3);
-                            
-                            int numOfEmployees = Utilities.getUserInput("Number of employees assigned to order: ");
-                            ArrayList<Integer> employeesAssigned = new ArrayList<>();
-                            
-                            
-                           
-                            Set<Integer> validEmployeeIds = new HashSet<>();
-                            // hash set to store values from a table
-                            // stores elements in an unordered fashion with no duplicates.
-                            query = "SELECT employee_id FROM Employee;";
-                            try (PreparedStatement employeePstmt = connection.prepareStatement(query)) {
-                                ResultSet employeeResultSet = employeePstmt.executeQuery();
-    
-                                while (employeeResultSet.next()) {
-                                    validEmployeeIds.add(employeeResultSet.getInt("employee_id"));
+                        for (int i = 0; i < numOfEmployees; i++){
+                             int employeeId = Utilities.getUserInput("Employee ID to assign: ");
+                             employeesAssigned.add(employeeId);
+                        }
+                        boolean continueChange = false;
+
+                        if (validEmployeeIds.containsAll(employeesAssigned)) {
+                            System.out.printf("Deducting order amount of %s from stock (current stock: %d) to %d. Please confirm (1 - yes, 2 - no)\n",
+                                    row.get(1), (int) row.get(2), (int) row.get(2) - orderQty);
+
+                            int choice = Utilities.getUserInput("Choice: ");
+
+                            switch (choice) {
+                                case 1 -> continueChange = true;
+                                case 2 -> {
+                                    System.out.println("Order not saved.");
+                                    System.out.println("Exiting place order menu...");
+                                    programRun = false;
                                 }
-                            } catch (SQLException e) {
-                                System.out.println("Error fetching employee data. Please try again later.");
+                                default -> throw new InputMismatchException();
                             }
-                            
-                            for (int i = 0; i < numOfEmployees; i++){
-                                 int employeeId = Utilities.getUserInput("Employee ID to assign: ");
-                                 employeesAssigned.add(employeeId);
-                            }
-                            boolean continueChange = false;
-                            
-                            if (validEmployeeIds.containsAll(employeesAssigned)) {
-                                System.out.printf("Deducting order amount of %s from stock (current stock: %d) to %d. Please confirm (1 - yes, 2 - no)\n",
-                                        row.get(1), (int) row.get(2), orderQty);
-    
-                                int choice = Utilities.getUserInput("Choice: ");
-    
-                                switch (choice) {
-                                    case 1 -> continueChange = true;
-                                    case 2 -> {
-                                        System.out.println("Order not saved.");
-                                        System.out.println("Exiting place order menu...");
-                                        programRun = false;
-                                    }
-                                    default -> throw new InputMismatchException();
+                            if (continueChange) {
+                                query = "UPDATE Inventory " +
+                                        "SET quantity = ? " +
+                                        "WHERE product_id = ?";
+
+                                try (PreparedStatement updatePstmt = connection.prepareStatement(query)) {
+                                    updatePstmt.setInt(1, updatedQuantity);
+                                    updatePstmt.setInt(2, productID);
+                                    updatePstmt.executeUpdate();
+                                    System.out.printf("Successfully updated the %s entry.\n", row.get(1));
                                 }
-                                if (continueChange) {
-                                    query = "UPDATE Inventory " +
-                                            "SET quantity = ?" +
-                                            "WHERE product_id = ?";
-    
-                                    try (PreparedStatement updatePstmt = connection.prepareStatement(query)) {
-                                        updatePstmt.setInt(1, updatedQuantity);
-                                        updatePstmt.setInt(2, productID);
-                                        updatePstmt.executeUpdate();
-                                        System.out.printf("Successfully updated the %s entry.\n", row.get(1));
-                                    }
+                                query = """
+                                        INSERT INTO Orders (order_datetime, order_type, order_status)
+                                        VALUES (?, ?, ?);
+                                        """;
+                                try (PreparedStatement orderPstmt = connection.prepareStatement(query)) {
+                                    orderPstmt.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+                                    orderPstmt.setInt(2, orderType);
+                                    orderPstmt.setString(3, "In Progress");
+
+                                    orderPstmt.executeUpdate();
+                                }
+
+
+                                for (int employeeID : employeesAssigned) {
                                     query = """
-                                            INSERT INTO Orders (order_datetime, order_type, order_status)
-                                            VALUES (?, ?, ?);
-                                            """;
-                                    try (PreparedStatement orderPstmt = connection.prepareStatement(query)) {
-                                        orderPstmt.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
-                                        orderPstmt.setInt(2, orderType);
-                                        orderPstmt.setString(3, "In Progress");
-    
-                                        orderPstmt.executeUpdate();
+                                        INSERT INTO Assigned_Employee_to_Order (order_id, employee_id)
+                                        VALUES ((SELECT order_id
+                                        FROM Orders
+                                        ORDER BY order_id DESC
+                                        LIMIT 1), ?);
+                                        """;
+                                    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+                                        pstmt.setInt(1, employeeID);
+                                        pstmt.executeUpdate();
+                                    } catch (SQLException e) {
+                                        System.out.println("Error inserting assigned employee: " + e.getMessage());
                                     }
-    
-                                    
-                                    for (int employeeID : employeesAssigned) {
-                                        query = """
-                                            INSERT INTO Assigned_Employee_to_Order (order_id, employee_id)
-                                            VALUES ((SELECT order_id
-                                            FROM Orders
-                                            ORDER BY order_id DESC
-                                            LIMIT 1), ?);
-                                            """;
-                                        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-                                            pstmt.setInt(1, employeeID);
-                                            pstmt.executeUpdate();
-                                        } catch (SQLException e) {
-                                            System.out.println("Error inserting assigned employee: " + e.getMessage());
-                                        }
-                                    } 
-                                }  
-                            } else {
-                                System.out.println("Invalid employee IDs. Please try again.");
                                 }
-    
-                        } else {
-                            System.out.println("Product not found. Please try again.");
                             }
-                    }
-                } catch (SQLException e) {
-                    System.out.println("Error processing order: " + e.getMessage());
+                        } else {
+                            System.out.println("Invalid employee IDs. Please try again.");
+                            }
+
+                    } else {
+                        System.out.println("Product not found. Please try again.");
+                        }
                 }
-                catch (InputMismatchException e) {
-                    System.out.println("Invalid input, try again.");
-                }
+            } catch (SQLException e) {
+                System.out.println("Error processing order: " + e.getMessage());
             }
-    
+            catch (InputMismatchException e) {
+                System.out.println("Invalid input, try again.");
+            }
+        }
+
     }
 
     private void restockInventory() {

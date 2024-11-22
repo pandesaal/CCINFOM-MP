@@ -375,7 +375,7 @@ public class RestaurantRecordsMgt {
     private void viewOrder() {
         boolean programRun = true;
         while (programRun) {
-             String query = "SELECT order_id, order_type, order_status FROM Orders;";
+             String query = "SELECT order_id, order_type, order_status, order_datetime FROM Orders;";
              
             try (PreparedStatement pstmt = connection.prepareStatement(query);
             ResultSet resultSet = pstmt.executeQuery()) {
@@ -393,12 +393,13 @@ public class RestaurantRecordsMgt {
                     int orderID = resultSet.getInt("order_id");
                     String orderType = resultSet.getString("order_type");
                     String orderStatus = resultSet.getString("order_status");
-    
+                    String orderDateTime = resultSet.getString("order_datetime");
+
                     /* Adds orderID to the rows list. This keeps track of all
                        orderIDs retrieved, possibly for future operations.*/
                     rows.add(orderID);
     
-                    System.out.printf("[%d] %s (%s)\n\n", orderID, orderType, orderStatus);
+                    System.out.printf("[%d] %s (%s) made on %s\n", orderID, orderType, orderStatus, orderDateTime);
                 }
            
                 boolean inputRun = true;
@@ -426,11 +427,11 @@ public class RestaurantRecordsMgt {
                                                                 //  id is the value that will replace the placeholder (?) in the query
                                 try (ResultSet detailResult = detailStmt.executeQuery()) {
     
-                                    System.out.println("\nInventory affected by Order ID: " + orderID);
+                                    System.out.println("\nProducts in Order ID: " + orderID);
                                     System.out.println("-".repeat(100));               
-                                    System.out.printf("%-10s %-30s %-20s %-20s\n",
+                                    System.out.printf("%-30s %-20s %-50s\n",
                                                       // left-aligned string (s) with a minimum width of 10 characters
-                                                      "Order ID", "Product Name", "Quantity Ordered", "Current Stock (after order was made)");
+                                                      "Product Name", "Quantity Ordered", "Current Stock (after order was made)");
                                                       // column headers for the table
                                     System.out.println("-".repeat(100));
     
