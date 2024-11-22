@@ -202,49 +202,6 @@ public class RestaurantReports {
 } 
     
 
-    private void showCustomerOrderReport() {
-
-        String query = "SELECT c.customer_name, o.orderid, o.orderdatetime, p.product_name, oi.quantity, oi.total_price " + // not final will adjust accdg to final table
-        "FROM orders o " +
-        "JOIN customers c ON o.customerid = c.customerid " +
-        "JOIN order_items oi ON o.orderid = oi.orderid " +
-        "JOIN products p ON oi.productid = p.productid " +
-        "ORDER BY o.orderdatetime DESC";
-
-        ResultSet resultSet = null;
-        try {
-            resultSet = statement.executeQuery(query);
-
-            System.out.println("Customer Order Report:");
-            System.out.println("-------------------------------------------------------------");
-            System.out.printf("%-20s %-10s %-15s %-20s %-8s %-10s\n", "Customer Name", "Order ID", "Order Date", "Product", "Quantity", "Total Price");
-            System.out.println("-------------------------------------------------------------");
-
-            while (resultSet.next()) {
-                String customerName = resultSet.getString("customer_name");
-                int orderId = resultSet.getInt("order_id");
-                Date orderDate = resultSet.getDate("order_date");
-                String productName = resultSet.getString("product_name");
-                int quantity = resultSet.getInt("quantity");
-                double totalPrice = resultSet.getDouble("total_price");
-
-                System.out.printf("%-20s %-10d %-15s %-20s %-8d %-10.2f\n",
-                customerName, orderId, orderDate.toString(), productName, quantity, totalPrice);
-            }
-
-        //i chat gpted this part so idk if tama to
-        } catch (SQLException e) {
-            System.out.println("Error fetching customer order report: " + e.getMessage());
-        } finally {
-            try {
-                if (resultSet != null) resultSet.close();
-                if (statement != null) statement.close();
-            } catch (SQLException e) {
-                System.out.println("Error closing resources: " + e.getMessage());
-            }
-        }
-    }
-
 private void showCustomerOrderReport() {
     boolean programRun = true;
     while (programRun) {
@@ -342,6 +299,95 @@ private void showCustomerOrderReport() {
     }
 }
 
+private void showEmployeeShiftReport() {
+    //TODO: Number of shifts per employee and total hours worked within a given year and month.
+        boolean programRun = true;    
+        while (programRun) {
+
+            int year = 0, month = 0;
+            boolean validInputs = false;
+
+                while (!validInputs) {
+                        try {
+                            year = Utilities.getUserInput("Enter year (0 if skip): ");
+                            month = Utilities.getUserInput("Enter month (0 if skip): ");
+                            if (year < 0 || month < 0 || month > 12) throw new InputMismatchException();
+
+                            validInputs = true;
+                        } catch (InputMismatchException e) {
+                            System.out.println("Invalid input. Please try again.");
+                        }
+                }
+
+                String query = """
+                SELECT
+                    e.employee_id,
+                    e.first_name,
+                    e.last_name,
+                    COUNT(a.order_id) AS num_of_shifts,
+                    (COUNT(a.order_id) * TIMESTAMPDIFF(HOUR, ts.time_start, ts.time_end)) AS total_hours_worked
+                FROM
+                    Employee e
+                JOIN
+                    Assigned_Employee_to_Order a ON e.employee_id = a.employee_id
+                JOIN
+                    Orders o ON a.order_id = o.order_id
+                JOIN
+                    TimeShift ts ON e.time_shiftid = ts.time_shiftid
+                WHERE
+                    YEAR(o.order_datetime) = ?
+                    AND MONTH(o.order_datetime) = ?
+                GROUP BY
+                    e.employee_id, e.first_name, e.last_name, ts.time_start, ts.time_end
+                """;
+
+                    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+                        pstmt.setInt(1, year);
+                        pstmt.setInt(2, month);
+
+                        try (ResultSet resultSet = pstmt.executeQuery()) {
+                            List<Integer> rows = new ArrayList<>();
+                            System.out.println("Employee Shift Report: ");
+                            System.out.printf("%-10s %-15s %-15s %-15s %-15s\n", "Emp ID", "First Name", "Last Name", "Shifts", "Total Hours");
+                            System.out.println("-".repeat(100));
+
+                            while (resultSet.next()) {
+                                int employeeId = resultSet.getInt("employee_id");
+                                String firstName = resultSet.getString("first_name");
+                                String lastName = resultSet.getString("last_name");
+                                int numOfShifts = resultSet.getInt("num_of_shifts");
+                                int totalHoursWorked = resultSet.getInt("total_hours_worked");
+
+                                rows.add(employeeId);
+                                System.out.printf("%-10d %-15s %-15s %-15d %-15d\n", employeeId, firstName, lastName, numOfShifts, totalHoursWorked);
+                            }
+
+                            if (rows.isEmpty()) {
+                                System.out.println("No shift records found for the specified period.");
+                            }
+                            System.out.println("-".repeat(100));
+
+                            boolean validChoice = false;
+                            while (!validChoice) {
+                                int choice = Utilities.getUserInput("Continue viewing shift report? (1 - yes, 2 - no): ");
+                                switch (choice) {
+                                    case 1 -> validChoice = true;
+                                    case 2 -> {
+                                        System.out.println("Exiting shift report menu...");
+                                        programRun = false;
+                                        validChoice = true;
+                                    }
+                                    default -> System.out.println("Invalid choice. Please enter 1 or 2.");
+                                }
+                            }
+                        }
+                    } catch (SQLException e) {
+                        System.out.println("Query error, edit MySQL database and try again.");
+                    } catch (InputMismatchException e) {
+                        System.out.println("Invalid input. Please try again.");
+                    }
+        }
+    }
 
 
 
