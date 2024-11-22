@@ -303,18 +303,23 @@ public class RestaurantReports {
             while (programRun) {
 
                 int year = 0, month = 0;
+                String date = "";
                 boolean validInputs = false;
 
                     while (!validInputs) {
-                            try {
-                                year = Utilities.getUserInput("Enter year (0 if skip): ");
-                                month = Utilities.getUserInput("Enter month (0 if skip): ");
-                                if (year < 0 || month < 0 || month > 12) throw new InputMismatchException();
+                        try {
+                            year = Utilities.getUserInput("Enter year (0 if skip): ");
+                            month = Utilities.getUserInput("Enter month (0 if skip): ");
+                            if (year < 0 || month < 0 || month > 12) throw new InputMismatchException();
 
-                                validInputs = true;
-                            } catch (InputMismatchException e) {
-                                System.out.println("Invalid input. Please try again.");
-                            }
+                            date = String.format("%s-%s-%%",
+                                    year == 0 ? "%" : String.format("%04d", year),
+                                    month == 0 ? "%" : String.format("%02d", month));
+
+                            validInputs = true;
+                        } catch (InputMismatchException e) {
+                            System.out.println("Invalid input. Please try again.");
+                        }
                     }
 
                     String query = """
@@ -333,15 +338,13 @@ public class RestaurantReports {
                     JOIN
                         TimeShift ts ON e.time_shiftid = ts.time_shiftid
                     WHERE
-                        YEAR(o.order_datetime) = ?
-                        AND MONTH(o.order_datetime) = ?
+                        o.order_datetime LIKE ?
                     GROUP BY
                         e.employee_id, e.first_name, e.last_name, ts.time_start, ts.time_end
                     """;
 
                         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-                            pstmt.setInt(1, year);
-                            pstmt.setInt(2, month);
+                            pstmt.setString(1, date);
 
                             try (ResultSet resultSet = pstmt.executeQuery()) {
                                 List<Integer> rows = new ArrayList<>();
