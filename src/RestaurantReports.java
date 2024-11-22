@@ -302,7 +302,7 @@ public class RestaurantReports {
             boolean programRun = true;
             while (programRun) {
 
-                int year = 0, month = 0;
+                int year, month;
                 String date = "";
                 boolean validInputs = false;
 
