@@ -247,8 +247,8 @@ public class RestaurantReports {
                     try (ResultSet resultSet = statement.executeQuery()) {
                         System.out.println("\nCustomer Order Report:");
                         System.out.println("-".repeat(100));
-                        System.out.printf("%-25s %-10s %-20s %-20s %-10s %-10s\n",
-                                "Customer Name", "Order ID", "Order Date", "Product", "Quantity", "Total Price");
+                        System.out.printf("%-25s %-10s %-30s %-20s %-10s %-10s\n",
+                                "Customer Name", "Order ID", "Order Timestamp", "Product", "Quantity", "Total Price");
                         System.out.println("-".repeat(100));
 
                         boolean hasRecords = false;
@@ -263,7 +263,7 @@ public class RestaurantReports {
                             int quantity = resultSet.getInt("quantity");
                             double totalPrice = resultSet.getDouble("total_price");
 
-                            System.out.printf("%-25s %-10d %-20s %-20s %-10d %-10.2f\n",
+                            System.out.printf("%-25s %-10d %-30s %-20s %-10d %-10.2f\n",
                                     customerName, orderId, orderDateTime.toString(), productName, quantity, totalPrice);
                         }
 

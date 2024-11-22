@@ -85,9 +85,14 @@ public class RestaurantTransactions {
             }
 
             if (!isCustomerValid) {
-                System.out.println("Invalid Customer ID. Please try again.");
-                continue;
+                throw new InputMismatchException();
             }
+
+            System.out.println("\nFood categories:");
+            System.out.println("[1] Main Course");
+            System.out.println("[2] Desserts");
+            System.out.println("[3] Beverages");
+            System.out.println("[4] Sides");
 
             int category = Utilities.getUserInput("Enter category to order: ");
             String categoryTxt = switch (category) {
@@ -118,7 +123,7 @@ public class RestaurantTransactions {
 
                 int productID = Utilities.getUserInput("Product ID of item to order: ");
                 List<Object> row = rows.stream()
-                        .filter(r -> (int) r.get(0) == productID)
+                        .filter(r -> (int) r.getFirst() == productID)
                         .findFirst()
                         .orElse(null);
 
@@ -478,18 +483,18 @@ public class RestaurantTransactions {
             System.out.println("[1] Remove Employee from Shift");
             System.out.println("[2] Add Shift to an Employee without Shift");
             System.out.println("[3] Empty All Shifts");
-            System.out.println("[0] Exit");
+            System.out.println("[4] Exit Shift Management");
             int userChoice = Utilities.getUserInput("Select an option: ");
 
             switch (userChoice) {
                 case 1 -> Utilities.removeEmployeeFromShift(connection);
                 case 2 -> Utilities.addShiftToEmployee(connection);
                 case 3 -> Utilities.emptyAllShifts(connection);
-                case 0 -> {
+                case 4 -> {
                     System.out.println("Exiting Shift Management...");
                     programRun = false;
                 }
-                default -> System.out.println("Invalid choice. Please select a valid option.");
+                default -> throw new InputMismatchException();
             }
         } catch (InputMismatchException e) {
             System.out.println("Invalid input. Please try again.");
