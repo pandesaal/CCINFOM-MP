@@ -151,7 +151,7 @@ public class RestaurantRecordsMgt {
         }
     }
 
-private void viewCustomer() {
+    private void viewCustomer() {
     boolean programRun = true;
 
     while (programRun) {
@@ -257,8 +257,6 @@ private void viewCustomer() {
         }
     }
 }
-
-
 
     private void viewEmployee() {
         boolean programRun = true;
