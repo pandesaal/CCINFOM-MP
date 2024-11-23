@@ -68,7 +68,7 @@ public class RestaurantReports {
         }
     }
 
-    private void showSalesReport() {
+showSalesReport() {
         boolean programRun = true;
         while (programRun) {
             try {
@@ -82,15 +82,21 @@ public class RestaurantReports {
                         int month = Utilities.getUserInput("Enter month (0 if skip): ");
                         int year = Utilities.getUserInput("Enter year (0 if skip): ");
 
-                        if (day < 0 || month < 0 || year < 0) throw new InputMismatchException();
+                        if (day < 0 || month < 0 || year < 0)
+                            throw new IllegalArgumentException("Day, month, and year must be non-negative.");
 
-                        // Validate the month and day ranges
-                        if ((month < 1 || month > 12) && month != 0) {
+                        // Validate the year range (e.g., 1900–2100)
+                        if (year > 0 && (year < 2014 || year > 2024))
+                            throw new IllegalArgumentException("Invalid year. Please enter a value within the last 10 years (2014-2024) or 0 to skip.");
+
+
+                        // Validate the month range
+                        if ((month < 1 || month > 12) && month != 0)
                             throw new IllegalArgumentException("Invalid month. Please enter a value between 1 and 12, or 0 to skip.");
-                        }
-                        if ((day < 1 || day > 31) && day != 0) {
+
+                        // Validate the day range
+                        if ((day < 1 || day > 31) && day != 0)
                             throw new IllegalArgumentException("Invalid day. Please enter a value between 1 and 31, or 0 to skip.");
-                        }
 
                         // Build the date pattern
                         String yearStr = (year == 0) ? "%" : String.format("%04d", year);
@@ -106,9 +112,9 @@ public class RestaurantReports {
 
                         validInputs = true;
                     } catch (IllegalArgumentException e) {
-                        System.out.println(e.getMessage());
+                        System.out.println(e.getMessage()); // Print custom error messages
                     } catch (InputMismatchException e) {
-                        System.out.println("Invalid input. Enter non-negative values.");
+                        System.out.println("Invalid input. Please enter numeric values only.");
                     }
                 }
 
@@ -123,10 +129,11 @@ public class RestaurantReports {
                 FROM Orders o
                 JOIN Order_Item oi ON o.order_id = oi.order_id
                 JOIN Inventory i ON oi.product_id = i.product_id
-                WHERE o.order_datetime LIKE ?
+                WHERE DATE(o.order_datetime) LIKE ?
                 GROUP BY sales_date, i.product_name
                 ORDER BY sales_date, product_sold DESC;
-            """;
+                """;
+
 
                 // Execute the query
                 try (PreparedStatement statement = connection.prepareStatement(query)) {
