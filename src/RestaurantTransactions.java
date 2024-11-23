@@ -115,7 +115,7 @@ public class RestaurantTransactions {
                 String customerAddress = Utilities.getStringInput("Enter address: ");
 
                 // Insert new customer into database
-                String insertCustomerQuery = "INSERT INTO Customers (last_name, first_name, email, phone_number, address) VALUES (?, ?, ?, ?, ?)";
+                String insertCustomerQuery = "INSERT INTO Customers (last_name, first_name, email, phonenumber, address) VALUES (?, ?, ?, ?, ?)";
                 try (PreparedStatement insertCustomerPstmt = connection.prepareStatement(insertCustomerQuery)) {
                     insertCustomerPstmt.setString(1, customerLastName);
                     insertCustomerPstmt.setString(1, customerFirstName);
