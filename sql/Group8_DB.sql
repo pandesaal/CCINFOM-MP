@@ -99,8 +99,8 @@ VALUES 	('Pork Sinigang', 'Main Course', 170.00, 250.00, 50, 1),
 
 CREATE TABLE IF NOT EXISTS Customers (
     customer_id INT AUTO_INCREMENT PRIMARY KEY,
-    lastname VARCHAR(50) NOT NULL,
-    firstname VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE KEY,
     phonenumber VARCHAR(20) NOT NULL UNIQUE KEY,
     address VARCHAR(200) NOT NULL
