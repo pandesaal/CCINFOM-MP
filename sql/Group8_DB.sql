@@ -118,19 +118,18 @@ VALUES
 CREATE TABLE IF NOT EXISTS Orders (
     order_id INT AUTO_INCREMENT PRIMARY KEY,
     customer_id INT NOT NULL,
-    total_amount DECIMAL(10, 2),
     order_type ENUM('Dine-In', 'Takeout', 'Delivery') NOT NULL,
     order_status ENUM('In Progress', 'Ready', 'Served', 'Completed') NOT NULL,
     order_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (customer_id) REFERENCES Customers(customer_id)
 );
 
-INSERT INTO Orders (customer_id, total_amount, order_type, order_status)
-VALUES 	(101, 495.00, 'Dine-In', 'In Progress'),
-		(102, 570.00, 'Takeout', 'Ready'),
-		(103, 480.00, 'Delivery', 'Served'),
-		(104, 530.00, 'Dine-In', 'Completed'),
-		(105, 425.00, 'Takeout', 'In Progress');
+INSERT INTO Orders (customer_id, order_type, order_status)
+VALUES 	(101,'Dine-In', 'In Progress'),
+		(102, 'Takeout', 'Ready'),
+		(103, 'Delivery', 'Served'),
+		(104, 'Dine-In', 'Completed'),
+		(105, 'Takeout', 'In Progress');
         
 CREATE TABLE IF NOT EXISTS Order_History (
     order_id INT NOT NULL,
