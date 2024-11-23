@@ -69,136 +69,119 @@ public class RestaurantReports {
     }
 
     private void showSalesReport() {
-    boolean programRun = true;
-    while (programRun) {
-        try {
-            String query;
-            String date = "";
+        boolean programRun = true;
+        while (programRun) {
+            try {
+                String datePattern = "";
+                boolean validInputs = false;
 
-            boolean validInputs = false;
-            while (!validInputs){
-                int day = Utilities.getUserInput("Enter day (0 if skip): ");
-                int month = Utilities.getUserInput("Enter month (0 if skip): ");
-                int year = Utilities.getUserInput("Enter year (0 if skip): ");
+                // Collect user input for date filtering
+                while (!validInputs) {
+                    try {
+                        int day = Utilities.getUserInput("Enter day (0 if skip): ");
+                        int month = Utilities.getUserInput("Enter month (0 if skip): ");
+                        int year = Utilities.getUserInput("Enter year (0 if skip): ");
 
-                if (day < 0 || month < 0 || year < 0) throw new InputMismatchException();
-                if (day != 0 && month != 0 && year != 0) {  // valid date
-                    date = Date.valueOf(String.format("%d-%02d-%02d", year, month, day)).toString();
-                } else {
-                    String yearStr, monthStr, dayStr;
+                        if (day < 0 || month < 0 || year < 0) throw new InputMismatchException();
 
-                    if (year == 0) 
-                        yearStr = "%";  // placeholder for "any year" if the year is not specified
-                    else yearStr = String.format("%04d", year); // // formats year as a 4-digit number
+                        // Validate the month and day ranges
+                        if ((month < 1 || month > 12) && month != 0) {
+                            throw new IllegalArgumentException("Invalid month. Please enter a value between 1 and 12, or 0 to skip.");
+                        }
+                        if ((day < 1 || day > 31) && day != 0) {
+                            throw new IllegalArgumentException("Invalid day. Please enter a value between 1 and 31, or 0 to skip.");
+                        }
 
-                    if (month == 0) 
-                        monthStr = "%"; // any month
-                    else monthStr = String.format("%02d", month);
+                        // Build the date pattern
+                        String yearStr = (year == 0) ? "%" : String.format("%04d", year);
+                        String monthStr = (month == 0) ? "%" : String.format("%02d", month);
+                        String dayStr = (day == 0) ? "%" : String.format("%02d", day);
 
-                    if (day == 0) 
-                        dayStr = "%";   // any day
-                    else dayStr = String.format("%02d", day);
-                    
-                    // construct date string
-                    date = String.format("%s-%s-%s", yearStr, monthStr, dayStr);
-                }
-                validInputs = true;
-            }
-            
-            /*
-                Main query pulls data related to daily sales for a given date.
-                It groups data by DATE(o.order_datetime) which allows us to group by each day of the month.
-            
-                Subquery determines the Top-Selling Product for each day 
-            */
-            query = """
-                    SELECT
-                        DATE(o.order_datetime) AS sales_date,
-                        SUM(oi.quantity * i.sell_price) AS total_sales,
-                        AVG(oi.quantity * i.sell_price) AS average_sales,
-                        sub_query.product_name AS top_selling_product,
-                        sub_query.product_sales AS top_selling_product_sales
-                    FROM Orders o
-                    JOIN Order_Item oi ON o.order_id = oi.order_id
-                    JOIN Inventory i ON oi.product_id = i.product_id
-                    JOIN (
-                        SELECT
-                            DATE(o.order_datetime) AS sub_sales_date,
-                            i.product_name,
-                            MAX(product_sales) AS product_sales
-                        FROM (
-                            SELECT
-                                DATE(o.order_datetime) AS sub_sales_date,
-                                oi.product_id,
-                                i.product_name,
-                                SUM(oi.quantity * i.sell_price) AS product_sales
-                            FROM Orders o
-                            JOIN Order_Item oi ON o.order_id = oi.order_id
-                            JOIN Inventory i ON oi.product_id = i.product_id
-                            WHERE o.order_datetime LIKE ?
-                            GROUP BY DATE(o.order_datetime), oi.product_id, i.product_name
-                        ) AS daily_products
-                        GROUP BY sub_sales_date, i.product_name
-                    ) AS sub_query ON DATE(o.order_datetime) = sub_query.sub_sales_date
-                    WHERE o.order_datetime LIKE ?
-                    GROUP BY DATE(o.order_datetime), sub_query.product_name, sub_query.product_sales;
-                   """;
-            
-                try (PreparedStatement statement = connection.prepareStatement(query)) {
-                    statement.setString(1, date + "%");
-                    statement.setString(2, date + "%");
+                        datePattern = String.format("%s-%s-%s", yearStr, monthStr, dayStr);
 
-                try (ResultSet result = statement.executeQuery()) {
-                    System.out.println("\nSales Report");
-                    System.out.println("-".repeat(120));
-                    System.out.printf("%-15s %-15s %-15s %-15s %-15s\n",
-                            "Sales Date", "Total Sales", "Average Sales", "Top Selling Product (TSP)", "TSP Sales");
-                    System.out.println("-".repeat(120));
+                        // Validate fully specified dates
+                        if (day != 0 && month != 0 && year != 0) {
+                            Date.valueOf(String.format("%04d-%02d-%02d", year, month, day));
+                        }
 
-                    boolean hasRecords = false;
-
-                    while (result.next()) {
-                        hasRecords = true;
-
-                        String salesDate = result.getString("sales_date");
-                        double totalSales = result.getDouble("total_sales");
-                        double averageSales = result.getDouble("average_sales");
-                        String topSellingProduct = result.getString("top_selling_product");
-                        double TSPsales = result.getDouble("top_selling_product_sales");
-
-
-                        System.out.printf("%-15s %-10.2f %-10.2f %-25s %-10.2f\n",
-                                salesDate, totalSales, averageSales, topSellingProduct, TSPsales);
+                        validInputs = true;
+                    } catch (IllegalArgumentException e) {
+                        System.out.println(e.getMessage());
+                    } catch (InputMismatchException e) {
+                        System.out.println("Invalid input. Enter non-negative values.");
                     }
-                    if (!hasRecords) 
-                        System.out.println("No order records found for this product.");
-
-                    System.out.println("-".repeat(120));
                 }
+
+                // Query to fetch sales report
+                String query = """
+                SELECT
+                    DATE(o.order_datetime) AS sales_date,
+                    SUM(oi.quantity * i.sell_price) AS total_sales,
+                    AVG(oi.quantity * i.sell_price) AS average_sales,
+                    i.product_name AS top_product,
+                    SUM(oi.quantity) AS product_sold
+                FROM Orders o
+                JOIN Order_Item oi ON o.order_id = oi.order_id
+                JOIN Inventory i ON oi.product_id = i.product_id
+                WHERE o.order_datetime LIKE ?
+                GROUP BY sales_date, i.product_name
+                ORDER BY sales_date, product_sold DESC;
+            """;
+
+                // Execute the query
+                try (PreparedStatement statement = connection.prepareStatement(query)) {
+                    statement.setString(1, datePattern); // Use the built date pattern
+
+                    try (ResultSet result = statement.executeQuery()) {
+                        System.out.println("\nSales Report");
+                        System.out.println("-".repeat(120));
+                        System.out.printf("%-15s %-15s %-15s %-25s %-15s\n",
+                                "Sales Date", "Total Sales", "Average Sales", "Top Product", "Units Sold");
+                        System.out.println("-".repeat(120));
+
+                        boolean hasRecords = false;
+
+                        // Process result set
+                        while (result.next()) {
+                            hasRecords = true;
+
+                            String salesDate = result.getString("sales_date");
+                            double totalSales = result.getDouble("total_sales");
+                            double averageSales = result.getDouble("average_sales");
+                            String topProduct = result.getString("top_product");
+                            int unitsSold = result.getInt("product_sold");
+
+                            System.out.printf("%-15s %-15.2f %-15.2f %-25s %-15d\n",
+                                    salesDate, totalSales, averageSales, topProduct, unitsSold);
+                        }
+
+                        if (!hasRecords) {
+                            System.out.println("No order records found for the specified date range.");
+                        }
+
+                        System.out.println("-".repeat(120));
+                    }
+                }
+            } catch (SQLException e) {
+                System.out.println("Database query error. Please check your database connection and query.");
             }
-            
-        } catch (SQLException e) {
-            System.out.println("Query error, edit MySQL database and try again."); }
-          catch (InputMismatchException e) {
-                System.out.println("Invalid input. Please try again.");}
-          catch (IllegalFormatException e) {
-                System.out.println("Date entered not valid, try again.");}
 
-        boolean validChoice = false;
-        while (!validChoice) {
-            int choice = Utilities.getUserInput("Continue viewing sales report? (1 - yes, 2 - no): ");
-            switch (choice) {
-                case 1 -> validChoice = true;
-                case 2 -> {
-                    System.out.println("Exiting sales report menu...");
-                    programRun = false;
-                    validChoice = true;
+            // Continue or exit
+            boolean validChoice = false;
+            while (!validChoice) {
+                int choice = Utilities.getUserInput("Continue viewing sales report? (1 - yes, 2 - no): ");
+                switch (choice) {
+                    case 1 -> validChoice = true;
+                    case 2 -> {
+                        System.out.println("Exiting sales report menu...");
+                        programRun = false;
+                        validChoice = true;
+                    }
+                    default -> System.out.println("Invalid choice. Please enter 1 or 2.");
                 }
-                default -> System.out.println("Invalid choice. Please enter 1 or 2.");
             }
         }
     }
-} 
 
     private void showCustomerOrderReport() {
     boolean programRun = true;
