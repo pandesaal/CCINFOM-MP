@@ -8,6 +8,7 @@ public class RestaurantRecordsMgt {
         this.connection = connection;
     }
 
+
     public void showMenu() {
 
         boolean programRun = true;
@@ -56,6 +57,7 @@ public class RestaurantRecordsMgt {
         }
     }
 
+
     private void viewProduct() {
         boolean programRun = true;
         while (programRun) {
@@ -78,22 +80,23 @@ public class RestaurantRecordsMgt {
                 }
 
                 try {
-                    int id = Utilities.getUserInput("Product ID of item to view: ");
+                    int id = Utilities.getUserInput("Product ID of item to view (Enter 0 to go back): ");
 
-                    if (rows.contains(id)) {
-                        // fetches all orders that contain a product belonging to the inventory
+                    if (id == 0) {  // Back option
+                        System.out.println("Returning to previous menu...");
+                        programRun = false;  // Exit the loop to go back
+                    } else if (rows.contains(id)) {
                         query = """
-                                SELECT o.order_id, oi.quantity AS quantity_ordered, o.order_datetime
-                                FROM Inventory i\s
-                                JOIN Order_Item oi ON i.product_id = oi.product_id\s
-                                JOIN Orders o ON o.order_id = oi.order_id\s
-                                WHERE i.product_id = ?
-                                ORDER BY oi.order_item_id;
-                               \s""";
+                            SELECT o.order_id, oi.quantity AS quantity_ordered, o.order_datetime
+                            FROM Inventory i
+                            JOIN Order_Item oi ON i.product_id = oi.product_id
+                            JOIN Orders o ON o.order_id = oi.order_id
+                            WHERE i.product_id = ?
+                            ORDER BY oi.order_item_id;
+                           """;
 
                         try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
-                            detailStmt.setInt(1, id);     // 1 refers to the first ? in the query
-                                                          //  id is the value that will replace the placeholder (?) in the query
+                            detailStmt.setInt(1, id);
                             try (ResultSet detailResult = detailStmt.executeQuery()) {
 
                                 System.out.println("\nOrder Details for Product ID: " + id);
@@ -101,7 +104,6 @@ public class RestaurantRecordsMgt {
                                 System.out.printf("%-10s %-20s %-15s\n", "Order ID", "Quantity Ordered", "Order Timestamp");
                                 System.out.println("-".repeat(100));
 
-                                //  flag to check if any records exist for the given product ID
                                 boolean hasRecords = false;
 
                                 while (detailResult.next()) {
@@ -111,8 +113,7 @@ public class RestaurantRecordsMgt {
                                     int quantityOrdered = detailResult.getInt("quantity_ordered");
                                     String orderDate = detailResult.getString("order_datetime");
 
-                                    System.out.printf("%-10d %-20d %-20s\n",
-                                            orderId, quantityOrdered, orderDate);
+                                    System.out.printf("%-10d %-20d %-20s\n", orderId, quantityOrdered, orderDate);
                                 }
 
                                 if (!hasRecords) {
@@ -123,164 +124,174 @@ public class RestaurantRecordsMgt {
                             }
                         }
 
-                    } else {    // throws an exception if the id is not in the rows list
+                        boolean validChoice = false;
+                        while (!validChoice) {
+                            int choice = Utilities.getUserInput("Continue viewing product records? (1 - yes, 2 - no, 0 - back): ");
+
+                            switch (choice) {
+                                case 1 -> validChoice = true;  // Continue viewing
+                                case 2 -> {
+                                    System.out.println("Exiting view products menu...");
+                                    programRun = false;  // Exit the loop
+                                    validChoice = true;
+                                }
+                                case 0 -> {
+                                    System.out.println("Returning to previous menu...");
+                                    programRun = false;  // Exit the loop and go back
+                                    validChoice = true;
+                                }
+                                default -> System.out.println("Invalid choice. Please enter 1, 2, or 0.");
+                            }
+                        }
+
+                    } else {
                         throw new InputMismatchException("Product ID not found.");
                     }
-                } catch (InputMismatchException e) {     // catches invalid input exceptions and prompts the user to try again
+                } catch (InputMismatchException e) {
                     System.out.println(e.getMessage());
                 }
 
-            } catch (SQLException e) {   // handles SQL-related errors, such as invalid queries or database issues
+            } catch (SQLException e) {
                 System.out.println("Query error, edit MySQL database and try again.");
-            }
-
-            boolean validChoice = false;
-            while (!validChoice) {
-                int choice = Utilities.getUserInput("Continue viewing product records? (1 - yes, 2 - no): ");
-
-                switch (choice) {
-                    case 1 -> validChoice = true;
-                    case 2 -> {
-                        System.out.println("Exiting view products menu...");
-                        programRun = false;
-                        validChoice = true;
-                    }
-                    default -> System.out.println("Invalid choice. Please enter 1 or 2.");
-                }
             }
         }
     }
 
-    
-private void viewCustomer() {
-    boolean programRun = true;
 
-    while (programRun) {
-        String query = "SELECT customer_id, first_name, last_name FROM Customers;";
+    private void viewCustomer() {
+        boolean programRun = true;
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query);
-             ResultSet resultSet = pstmt.executeQuery()) {
+        while (programRun) {
+            String query = "SELECT customer_id, first_name, last_name FROM Customers;";
 
-            List<Integer> customerIds = new ArrayList<>();
+            try (PreparedStatement pstmt = connection.prepareStatement(query);
+                 ResultSet resultSet = pstmt.executeQuery()) {
 
-            System.out.println("List of all customers:");
-            System.out.println("-".repeat(50));
-            System.out.printf("%-10s %-20s\n", "Customer ID", "Name");
-            System.out.println("-".repeat(50));
+                List<Integer> customerIds = new ArrayList<>();
 
-            boolean hasCustomers = false;
+                System.out.println("List of all customers:");
+                System.out.println("-".repeat(50));
+                System.out.printf("%-10s %-20s\n", "Customer ID", "\tName");
+                System.out.println("-".repeat(50));
 
-            while (resultSet.next()) {
-                hasCustomers = true;
-                int id = resultSet.getInt("customer_id");
-                String name = resultSet.getString("first_name") + " " + resultSet.getString("last_name");
+                boolean hasCustomers = false;
 
-                customerIds.add(id);
-                System.out.printf("%-10d %-20s\n", id, name);
-            }
+                while (resultSet.next()) {
+                    hasCustomers = true;
+                    int id = resultSet.getInt("customer_id");
+                    String name = "\t\t" + resultSet.getString("first_name") + " " + resultSet.getString("last_name");
 
-            if (!hasCustomers) {
-                System.out.println("No customers found.");
-                break;
-            }
+                    customerIds.add(id);
+                    System.out.printf("%-10d %-20s\n", id, name);
+                }
 
-            System.out.println("-".repeat(50));
-            boolean inputRun = true;
+                if (!hasCustomers) {
+                    System.out.println("No customers found.");
+                    break; // Exit the outer loop if no customers are found.
+                }
 
-            while (inputRun) {
-                try {
-                    int id = Utilities.getUserInput("Enter Customer ID to view: ");
+                System.out.println("-".repeat(50));
 
-                    if (customerIds.contains(id)) {
-                        query = "SELECT * FROM Customers WHERE customer_id = ?;";
+                boolean inputRun = true;
 
-                        try (PreparedStatement customerStmt = connection.prepareStatement(query)) {
-                            customerStmt.setInt(1, id);
+                while (inputRun) {
+                    try {
+                        int id = Utilities.getUserInput("Enter Customer ID to view (Enter 0 to go back): ");
 
-                            try (ResultSet customerDetails = customerStmt.executeQuery()) {
-                                if (customerDetails.next()) {
-                                    System.out.println("\nCustomer Details:");
-                                    System.out.println("-".repeat(50));
-                                    System.out.printf("ID: %d\n", customerDetails.getInt("customer_id"));
-                                    System.out.printf("Name: %s %s\n",
-                                            customerDetails.getString("first_name"),
-                                            customerDetails.getString("last_name"));
-                                    System.out.printf("Email: %s\n", customerDetails.getString("email"));
-                                    System.out.printf("Phone: %s\n", customerDetails.getString("phonenumber"));
-                                    System.out.printf("Address: %s\n", customerDetails.getString("address"));
-                                    System.out.println("-".repeat(50));
+                        if (id == 0) {
+                            System.out.println("Returning to previous menu...");
+                            inputRun = false;  // Exit inner loop
+                            programRun = false;  // Exit outer loop to stop the whole process
+                        } else if (customerIds.contains(id)) {
+                            query = "SELECT * FROM Customers WHERE customer_id = ?;";
+
+                            try (PreparedStatement customerStmt = connection.prepareStatement(query)) {
+                                customerStmt.setInt(1, id);
+
+                                try (ResultSet customerDetails = customerStmt.executeQuery()) {
+                                    if (customerDetails.next()) {
+                                        System.out.println("\nCustomer Details:");
+                                        System.out.println("-".repeat(50));
+                                        System.out.printf("ID: %d\n", customerDetails.getInt("customer_id"));
+                                        System.out.printf("Name: %s %s\n",
+                                                customerDetails.getString("first_name"),
+                                                customerDetails.getString("last_name"));
+                                        System.out.printf("Email: %s\n", customerDetails.getString("email"));
+                                        System.out.printf("Phone: %s\n", customerDetails.getString("phonenumber"));
+                                        System.out.printf("Address: %s\n", customerDetails.getString("address"));
+                                        System.out.println("-".repeat(50));
+                                    }
                                 }
                             }
-                        }
 
-                        query = """
+                            query = """
                                 SELECT o.order_id, o.order_type, o.order_datetime
                                 FROM Orders o
                                 WHERE o.customer_id = ?
                                 ORDER BY o.order_datetime DESC;
                                 """;
 
-                        try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
-                            detailStmt.setInt(1, id);
+                            try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
+                                detailStmt.setInt(1, id);
 
-                            try (ResultSet detailResult = detailStmt.executeQuery()) {
-                                System.out.println("\nOrder History:");
-                                System.out.println("-".repeat(70));
-                                System.out.printf("%-10s %-15s %-20s\n", "Order ID", "Order Type", "Order Date");
-                                System.out.println("-".repeat(70));
+                                try (ResultSet detailResult = detailStmt.executeQuery()) {
+                                    System.out.println("\nOrder History:");
+                                    System.out.println("-".repeat(70));
+                                    System.out.printf("%-10s %-15s %-20s\n", "Order ID", "Order Type", "Order Date");
+                                    System.out.println("-".repeat(70));
 
-                                boolean hasRecords = false;
+                                    boolean hasRecords = false;
 
-                                while (detailResult.next()) {
-                                    hasRecords = true;
+                                    while (detailResult.next()) {
+                                        hasRecords = true;
 
-                                    int orderId = detailResult.getInt("order_id");
-                                    String orderType = detailResult.getString("order_type");
-                                    String orderDate = detailResult.getString("order_datetime");
+                                        int orderId = detailResult.getInt("order_id");
+                                        String orderType = detailResult.getString("order_type");
+                                        String orderDate = detailResult.getString("order_datetime");
 
-                                    System.out.printf("%-10d %-15s %-20s\n", orderId, orderType, orderDate);
+                                        System.out.printf("%-10d %-15s %-20s\n", orderId, orderType, orderDate);
+                                    }
+
+                                    if (!hasRecords) {
+                                        System.out.println("No order history found for this customer.");
+                                    }
+
+                                    System.out.println("-".repeat(70));
                                 }
-
-                                if (!hasRecords) {
-                                    System.out.println("No order history found for this customer.");
-                                }
-
-                                System.out.println("-".repeat(70));
                             }
-                        }
 
-                        boolean validChoice = false;
-                        while (!validChoice) {
-                            int choice = Utilities.getUserInput("Continue viewing customer records? (1 - yes, 2 - no): ");
+                            boolean validChoice = false;
+                            while (!validChoice) {
+                                int choice = Utilities.getUserInput("Continue viewing customer records? (1 - yes, 2 - no): ");
 
-                            switch (choice) {
-                                case 1 -> validChoice = true;
-                                case 2 -> {
-                                    System.out.println("Exiting view customer menu...");
-                                    programRun = false;
-                                    inputRun = false;
-                                    validChoice = true;
+                                switch (choice) {
+                                    case 1 -> validChoice = true;
+                                    case 2 -> {
+                                        System.out.println("Exiting view customer menu...");
+                                        programRun = false;
+                                        inputRun = false;
+                                        validChoice = true;
+                                    }
+                                    default -> System.out.println("Invalid choice. Please enter 1 or 2.");
                                 }
-                                default -> System.out.println("Invalid choice. Please enter 1 or 2.");
                             }
+                        } else {
+                            throw new InputMismatchException("Customer ID not found.");
                         }
-                    } else {
-                        throw new InputMismatchException("Customer ID not found.");
+                    } catch (InputMismatchException e) {
+                        System.out.println("Error: " + e.getMessage());
+                    } catch (SQLException e) {
+                        System.out.println("Database error: " + e.getMessage());
                     }
-                } catch (InputMismatchException e) {
-                    System.out.println("Error: " + e.getMessage());
-                } catch (SQLException e) {
-                    System.out.println("Database error: " + e.getMessage());
                 }
+            } catch (SQLException e) {
+                System.out.println("Query error: " + e.getMessage());
             }
-        } catch (SQLException e) {
-            System.out.println("Query error: " + e.getMessage());
         }
     }
-}
 
 
-        private void viewEmployee() {
+    private void viewEmployee() {
         boolean programRun = true;
         while (programRun) {
             String query = "SELECT employee_id, first_name, last_name FROM Employee;";
@@ -301,12 +312,22 @@ private void viewCustomer() {
                     System.out.printf("[%d] %s %s\n", id, firstName, lastName);
                 }
 
-                try {
-                    int id = Utilities.getUserInput("Employee ID of employee to view: ");
+                int id;
+                boolean validInput = false;
+                while (!validInput) {
+                    try {
+                        id = Utilities.getUserInput("Employee ID of employee to view (Enter 0 to go back): ");
 
-                    if (employeeIds.contains(id)) {
+                        if (id == 0) {
+                            System.out.println("Returning to previous menu...");
+                            programRun = false;
+                            break;
+                        }
 
-                        query = """
+                        if (employeeIds.contains(id)) {
+                            validInput = true;
+
+                            query = """
                             SELECT e.first_name, e.last_name, r.role_name, t.shift_type, t.time_start, t.time_end
                             FROM Employee e
                             JOIN Roles r ON e.role_id = r.role_id
@@ -315,52 +336,53 @@ private void viewCustomer() {
                             ORDER BY e.employee_id;
                             """;
 
-                        try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
-                            detailStmt.setInt(1, id);
-                            try (ResultSet detailResult = detailStmt.executeQuery()) {
+                            try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
+                                detailStmt.setInt(1, id);
+                                try (ResultSet detailResult = detailStmt.executeQuery()) {
 
-                                System.out.println("\nEmployee Details for Employee ID: " + id);
-                                System.out.println("-".repeat(100));
-                                System.out.printf("%-10s %-15s %-15s %-20s %-20s %-20s %-20s\n",
-                                        "Employee ID", "First Name", "Last Name", "Role",
-                                        "Shift Type", "Start Time", "End Time");
-                                System.out.println("-".repeat(100));
+                                    System.out.println("\nEmployee Details for Employee ID: " + id);
+                                    System.out.println("-".repeat(100));
+                                    System.out.printf("%-10s %-15s %-15s %-20s %-20s %-20s %-20s\n",
+                                            "Employee ID", "First Name", "Last Name", "Role",
+                                            "Shift Type", "Start Time", "End Time");
+                                    System.out.println("-".repeat(100));
 
-                                boolean hasRecords = false;
+                                    boolean hasRecords = false;
 
-                                while (detailResult.next()) {
-                                    hasRecords = true;
+                                    while (detailResult.next()) {
+                                        hasRecords = true;
 
-                                    String firstName = detailResult.getString("first_name");
-                                    String lastName = detailResult.getString("last_name");
-                                    String roleName = detailResult.getString("role_name");
-                                    String shiftType = detailResult.getString("shift_type");
-                                    Time startTime = detailResult.getTime("time_start");
-                                    Time endTime = detailResult.getTime("time_end");
+                                        String firstName = detailResult.getString("first_name");
+                                        String lastName = detailResult.getString("last_name");
+                                        String roleName = detailResult.getString("role_name");
+                                        String shiftType = detailResult.getString("shift_type");
+                                        Time startTime = detailResult.getTime("time_start");
+                                        Time endTime = detailResult.getTime("time_end");
 
-                                    System.out.printf(" %-10d %-15s %-15s %-20s %-20s %-20s %-20s\n",
-                                            id,
-                                            firstName != null ? firstName : "N/A",
-                                            lastName != null ? lastName : "N/A",
-                                            roleName != null ? roleName : "N/A",
-                                            shiftType != null ? shiftType : "N/A",
-                                            startTime != null ? startTime : "N/A",
-                                            endTime != null ? endTime : "N/A");
+                                        System.out.printf(" %-10d %-15s %-15s %-20s %-20s %-20s %-20s\n",
+                                                id,
+                                                firstName != null ? firstName : "N/A",
+                                                lastName != null ? lastName : "N/A",
+                                                roleName != null ? roleName : "N/A",
+                                                shiftType != null ? shiftType : "N/A",
+                                                startTime != null ? startTime : "N/A",
+                                                endTime != null ? endTime : "N/A");
+                                    }
+
+                                    if (!hasRecords) {
+                                        System.out.println("No records found for this employee.");
+                                    }
+
+                                    System.out.println("-".repeat(100));
                                 }
-
-                                if (!hasRecords) {
-                                    System.out.println("No records found for this employee.");
-                                }
-
-                                System.out.println("-".repeat(100));
                             }
-                        }
 
-                    } else {
-                        throw new InputMismatchException("Employee ID not found.");
+                        } else {
+                            System.out.println("Employee ID not found.");
+                        }
+                    } catch (InputMismatchException e) {
+                        System.out.println("Invalid input. Please try again.");
                     }
-                } catch (InputMismatchException e) {
-                    System.out.println(e.getMessage());
                 }
 
             } catch (SQLException e) {
@@ -381,113 +403,110 @@ private void viewCustomer() {
                 }
             }
 
-            boolean validChoice = false;
-            while (!validChoice) {
-                int choice = Utilities.getUserInput("Continue viewing employee records? (1 - yes, 2 - no): ");
+            if (programRun) {
+                boolean validChoice = false;
+                while (!validChoice) {
+                    int choice = Utilities.getUserInput("Continue viewing employee records? (1 - yes, 2 - no): ");
 
-                switch (choice) {
-                    case 1 -> validChoice = true;
-                    case 2 -> {
-                        System.out.println("Exiting view employees menu...");
-                        programRun = false;
-                        validChoice = true;
+                    switch (choice) {
+                        case 1 -> validChoice = true;
+                        case 2 -> {
+                            System.out.println("Exiting view employees menu...");
+                            programRun = false;
+                            validChoice = true;
+                        }
+                        default -> System.out.println("Invalid choice. Please enter 1 or 2.");
                     }
-                    default -> System.out.println("Invalid choice. Please enter 1 or 2.");
                 }
             }
         }
     }
+    
 
     private void viewOrder() {
         boolean programRun = true;
         while (programRun) {
-             String query = "SELECT order_id, order_type, order_status, order_datetime FROM Orders;";
-             
+            String query = "SELECT order_id, order_type, order_status, order_datetime FROM Orders;";
+
             try (PreparedStatement pstmt = connection.prepareStatement(query);
-            ResultSet resultSet = pstmt.executeQuery()) {
-    
-                // Creates an ArrayList to store orderID values from the query results
+                 ResultSet resultSet = pstmt.executeQuery()) {
+
                 List<Integer> rows = new ArrayList<>();
-    
+
                 System.out.println("List of all orders: ");
-                /*
-                 ResultSet represents the result of a database query, 
-                 specifically the rows returned by an SQL SELECT statement.
-                 The cursor starts before the first row, call .next() to move
-                 it to the first row.*/
-                while (resultSet.next()) { // while may next row pa
+
+                while (resultSet.next()) {
                     int orderID = resultSet.getInt("order_id");
                     String orderType = resultSet.getString("order_type");
                     String orderStatus = resultSet.getString("order_status");
                     String orderDateTime = resultSet.getString("order_datetime");
 
-                    /* Adds orderID to the rows list. This keeps track of all
-                       orderIDs retrieved, possibly for future operations.*/
                     rows.add(orderID);
-    
+
                     System.out.printf("[%d] %s (%s) made on %s\n", orderID, orderType, orderStatus, orderDateTime);
                 }
-           
+
                 boolean inputRun = true;
                 while (inputRun) {
                     try {
-                        int orderID = Utilities.getUserInput("Order ID to view: ");
-    
-                        /*
-                        Checks if the user-provided id exists in the rows list
-                        throws an exception is ID is invalid */
+                        int orderID = Utilities.getUserInput("Order ID to view (Enter 0 to go back): ");
+
+                        // If the user enters 0, exit to the previous menu
+                        if (orderID == 0) {
+                            System.out.println("Returning to previous menu...");
+                            programRun = false;  // Set programRun to false to exit the loop and go back
+                            inputRun = false;    // Exit the inner loop as well
+                            break;               // Exit the inner loop to avoid further processing
+                        }
+
+                        // If the orderID is valid, show details
                         if (rows.contains(orderID)) {
-                            // View an order and the inventory it affected
+                            // Query to get the details of the selected order and its affected inventory
                             query = """
-                                        SELECT o.order_id, i.product_name, oi.quantity AS "quantity_ordered",\s
-                                        i.quantity AS "current_stock"\s
-                                        FROM Orders o\s
-                                        JOIN Order_Item oi ON o.order_id = oi.order_id\s
-                                        JOIN Inventory i ON i.product_id = oi.product_id\s
-                                        WHERE o.order_id = ?
-                                        ORDER BY o.order_id, i.product_name;
-                                       \s""";  
-    
+                                SELECT o.order_id, i.product_name, oi.quantity AS "quantity_ordered",
+                                       i.quantity AS "current_stock"
+                                FROM Orders o
+                                JOIN Order_Item oi ON o.order_id = oi.order_id
+                                JOIN Inventory i ON i.product_id = oi.product_id
+                                WHERE o.order_id = ?
+                                ORDER BY o.order_id, i.product_name;
+                                """;
+
                             try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
-                                detailStmt.setInt(1, orderID);  // 1 refers to the first ? in the query
-                                                                //  id is the value that will replace the placeholder (?) in the query
+                                detailStmt.setInt(1, orderID);  // Set the orderID in the query
                                 try (ResultSet detailResult = detailStmt.executeQuery()) {
-    
+
                                     System.out.println("\nProducts in Order ID: " + orderID);
-                                    System.out.println("-".repeat(100));               
-                                    System.out.printf("%-30s %-20s %-50s\n",
-                                                      // left-aligned string (s) with a minimum width of 10 characters
-                                                      "Product Name", "Quantity Ordered", "Current Stock (after order was made)");
-                                                      // column headers for the table
                                     System.out.println("-".repeat(100));
-    
-                                    //  flag to check if any records exist for the given order ID
+                                    System.out.printf("%-30s %-20s %-50s\n",
+                                            "Product Name", "Quantity Ordered", "Current Stock (after order was made)");
+                                    System.out.println("-".repeat(100));
+
                                     boolean hasRecords = false;
-                                   /*
-                                    detailResult represents the rows returned by an SQL query.
-                                    while loop iterates through the rows */
-                                    while (detailResult.next()) {   // while may next row pa
+
+                                    while (detailResult.next()) {
                                         hasRecords = true;
 
                                         String productName = detailResult.getString("product_name");
                                         int quantityOrdered = detailResult.getInt("quantity_ordered");
                                         int currentStock = detailResult.getInt("current_stock");
-                                        
+
                                         System.out.printf("%-30s %-20s %-10s\n",
-                                           productName, quantityOrdered, currentStock);
+                                                productName, quantityOrdered, currentStock);
                                     }
-    
-                                    if (!hasRecords)
+
+                                    if (!hasRecords) {
                                         System.out.println("No order records found for this order.");
-    
-                                    System.out.println("-".repeat(100));  
+                                    }
+
+                                    System.out.println("-".repeat(100));
                                 }
-                           }
-    
+                            }
+
                             boolean validChoice = false;
                             while (!validChoice) {
                                 int choice = Utilities.getUserInput("Continue viewing order records? (1 - yes, 2 - no): ");
-    
+
                                 switch (choice) {
                                     case 1 -> validChoice = true;
                                     case 2 -> {
@@ -499,15 +518,16 @@ private void viewCustomer() {
                                     default -> System.out.println("Invalid choice. Please enter 1 or 2.");
                                 }
                             }
-                        } else    // throws an exception if the id is not in the rows list
+                        } else {  
                             throw new InputMismatchException("Order ID not found.");
-                    } catch (InputMismatchException e)  {    // catches invalid input exceptions and prompts the user to try again
+                        }
+                    } catch (InputMismatchException e) {
                         System.out.println("Invalid input. Please try again.");
-                      } 
+                    }
                 }
-            }  catch (SQLException e) {   // handles SQL-related errors, such as invalid queries or database issues
-                        System.out.println("Query error, edit MySQL database and try again.");
-                }
+            } catch (SQLException e) {
+                System.out.println("Query error, edit MySQL database and try again.");
+            }
         }
     }
 }
