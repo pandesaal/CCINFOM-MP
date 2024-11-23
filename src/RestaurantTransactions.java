@@ -67,25 +67,71 @@ public class RestaurantTransactions {
     
         boolean programRun = true;
         while (programRun) {
-        System.out.println("\nFood categories:");
-        System.out.println("[1] Main Course");
-        System.out.println("[2] Desserts");
-        System.out.println("[3] Beverages");
-        System.out.println("[4] Sides");
 
         try {
-            int customerId = Utilities.getUserInput("Enter Customer ID: ");
-
-            String customerQuery = "SELECT customer_id FROM Customers WHERE customer_id = ?";
-            boolean isCustomerValid;
-            try (PreparedStatement customerPstmt = connection.prepareStatement(customerQuery)) {
-                customerPstmt.setInt(1, customerId);
-                ResultSet customerRs = customerPstmt.executeQuery();
-                isCustomerValid = customerRs.next();
+            String showCustomersQuery = "SELECT customer_id, CONCAT('first_name', ' ', 'last_name') AS name FROM Customers";
+            try (PreparedStatement stmt = connection.prepareStatement(showCustomersQuery);
+                ResultSet rs = stmt.executeQuery()) {
+                List<List<Object>> rowsCustomer = new ArrayList<>();
+               
+                System.out.println("Current customers in the database:");
+                while (rs.next()) {
+                    int customerId = rs.getInt("customer_id");
+                    String customerName = rs.getString("name");
+                
+                    rowsCustomer.add(List.of(customerId, customerName));
+                    System.out.printf("[%d] %s\n", customerId, customerName);
+                }
             }
 
-            if (!isCustomerValid) {
-                throw new InputMismatchException();
+            // Not needed?
+           /* List<Object> rowsCustomer = rowsCustomer.stream()
+                        .filter(r -> (int) r.get(0) == customerId)
+                        .findFirst()
+                        .orElse(null);
+            */
+            int customerId = Utilities.getUserInput("Enter Customer ID (or 0 to create a new customer): ");
+            boolean isCustomerValid = false;
+
+            if (customerId != 0) {
+                // Validate if the entered customer ID exists
+                String customerQuery = "SELECT customer_id FROM Customers WHERE customer_id = ?";
+                try (PreparedStatement customerPstmt = connection.prepareStatement(customerQuery)) {
+                    customerPstmt.setInt(1, customerId);
+                    ResultSet customerRs = customerPstmt.executeQuery();
+                    isCustomerValid = customerRs.next();
+                }
+
+                if (!isCustomerValid) {
+                    throw new InputMismatchException();
+                }
+            } else {
+                // Option to create a new customer
+                String customerLastName = Utilities.getStringInput("Enter last name: ");
+                String customerFirstName = Utilities.getStringInput("Enter first name: ");
+                String customerPhone = Utilities.getStringInput("Enter phone number: ");
+                String customerEmail = Utilities.getStringInput("Enter email: ");
+                String customerAddress = Utilities.getStringInput("Enter address: ");
+
+                // Insert new customer into database
+                String insertCustomerQuery = "INSERT INTO Customers (last_name, first_name, email, phone_number, address) VALUES (?, ?, ?, ?, ?)";
+                try (PreparedStatement insertCustomerPstmt = connection.prepareStatement(insertCustomerQuery)) {
+                    insertCustomerPstmt.setString(1, customerLastName);
+                    insertCustomerPstmt.setString(1, customerFirstName);
+                    insertCustomerPstmt.setString(1, customerPhone);
+                    insertCustomerPstmt.setString(2, customerEmail);
+                    insertCustomerPstmt.setString(3, customerAddress);
+                    insertCustomerPstmt.executeUpdate();
+                    System.out.println("New customer created successfully!");
+                    
+                    // Fetch the newly created customer ID (assuming it's auto-generated)
+                    try (Statement stmt = connection.createStatement();
+                         ResultSet rs = stmt.executeQuery("SELECT LAST_INSERT_ID();")) {
+                        if (rs.next()) {
+                            customerId = rs.getInt(1);
+                        }
+                    }
+                }
             }
 
             System.out.println("\nFood categories:");
