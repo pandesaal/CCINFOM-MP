@@ -427,15 +427,15 @@ public class RestaurantTransactions {
     while (programRun) {
         try {
             String query = """
-                SELECT o.order_id, o.customer_id,\s
-                       SUM(oi.quantity * i.sell_price) AS total_amount,
-                       o.payment_status
-                FROM Orders o
-                JOIN Order_Item oi ON o.order_id = oi.order_id
-                JOIN Inventory i ON oi.product_id = i.product_id
-                WHERE o.payment_status = 'Unpaid'
-                GROUP BY o.order_id, o.customer_id, o.payment_status;
-           \s""";
+            SELECT o.order_id, o.customer_id,
+                                   SUM(oi.quantity * i.sell_price) AS total_amount,
+                                   o.order_status
+                            FROM Orders o
+                            JOIN Order_Item oi ON o.order_id = oi.order_id
+                            JOIN Inventory i ON oi.product_id = i.product_id
+                            WHERE o.order_status = 'In Progress'
+                            GROUP BY o.order_id, o.customer_id, o.order_status;
+            """;
 
             List<List<Object>> orders = new ArrayList<>();
             try (PreparedStatement preparedStatement = connection.prepareStatement(query);
@@ -454,7 +454,7 @@ public class RestaurantTransactions {
 
                     orders.add(List.of(orderId, customerId, totalAmount));
                     System.out.printf("[Order ID: %d] Customer ID: %d, Total Amount: %.2f\n",
-                                      orderId, customerId, totalAmount);
+                            orderId, customerId, totalAmount);
                 }
             }
 
@@ -463,9 +463,9 @@ public class RestaurantTransactions {
                 try {
                     int orderId = Utilities.getUserInput("Enter Order ID to process payment: ");
                     List<Object> order = orders.stream()
-                                                .filter(o -> (int) o.get(0) == orderId)
-                                                .findFirst()
-                                                .orElse(null);
+                            .filter(o -> (int) o.get(0) == orderId)
+                            .findFirst()
+                            .orElse(null);
 
                     if (order == null) {
                         throw new InputMismatchException("Invalid Order ID.");
@@ -485,9 +485,15 @@ public class RestaurantTransactions {
                         default -> throw new InputMismatchException("Invalid payment method choice.");
                     };
 
-                    double paymentAmount = Utilities.getUserInput("Enter payment amount: ");
-                    if (paymentAmount < totalAmount) {
-                        throw new InputMismatchException("Payment amount is less than the total amount.");
+                    boolean paymentValid = false;
+                    double paymentAmount = 0;
+                    while (!paymentValid) {
+                        paymentAmount = Utilities.getUserInput("Enter payment amount: ");
+                        if (paymentAmount < totalAmount) {
+                            System.out.println("Payment amount is less than the total amount. Please enter a valid amount.");
+                        } else {
+                            paymentValid = true;
+                        }
                     }
 
                     connection.setAutoCommit(false);
@@ -501,7 +507,7 @@ public class RestaurantTransactions {
                         paymentStmt.executeUpdate();
                     }
 
-                    query = "UPDATE Orders SET payment_status = 'Paid' WHERE order_id = ?";
+                    query = "UPDATE Orders SET order_status = 'Completed' WHERE order_id = ?";
                     try (PreparedStatement orderStmt = connection.prepareStatement(query)) {
                         orderStmt.setInt(1, orderId);
                         orderStmt.executeUpdate();
@@ -522,7 +528,7 @@ public class RestaurantTransactions {
                 } catch (InputMismatchException e) {
                     System.out.println(e.getMessage());
                 } catch (SQLException e) {
-                    System.out.println("Error processing payment. Rolling back transaction...");
+                    System.out.println("Error processing payment. Rolling back transaction..." + e.getMessage());
                     connection.rollback();
                     inputRun = false;
                 } finally {
@@ -530,7 +536,7 @@ public class RestaurantTransactions {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Error fetching unpaid orders. Please try again later.");
+            System.out.println("Error fetching unpaid orders: " + e.getMessage());
         }
 
         boolean validChoice = false;
