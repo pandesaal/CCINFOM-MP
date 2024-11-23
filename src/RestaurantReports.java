@@ -31,7 +31,7 @@ public class RestaurantReports {
             System.out.println("[2] View Customer Order Report");
             System.out.println("[3] View Employee Shift Report");
             System.out.println("[4] View Profit Margin Report");
-            System.out.println("[5] Exit Program");
+            System.out.println("[5] Go Back");
 
             inputRun = true;
             while (inputRun) {
