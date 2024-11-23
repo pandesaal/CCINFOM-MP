@@ -415,11 +415,11 @@ private void showSalesReport() {
                         date = String.format("%s-%s-%s",
                                 year == 0 ? "%" : String.format("%04d", year),
                                 month == 0 ? "%" : String.format("%02d", month),
-                                day == 0 ? "%" : String.format("%02d%%", day));
+                                day == 0 ? "%" : String.format("%02d", day));
                         displayDate = String.format("%s-%s-%s",
                                 year == 0 ? "XXXX" : String.format("%04d", year),
                                 month == 0 ? "XX" : String.format("%02d", month),
-                                day == 0 ? "XX" : String.format("%02d%%", day));
+                                day == 0 ? "XX" : String.format("%02d", day));
                     }
                     validInputs = true;
                 }
@@ -441,7 +441,7 @@ private void showSalesReport() {
                         "ORDER BY total_profit DESC;";
 
                 try (PreparedStatement statement = connection.prepareStatement(query)) {
-                    statement.setString(1, date);
+                    statement.setString(1, date + "%");
 
                     try (ResultSet result = statement.executeQuery()) {
                         System.out.println("\nProfit Margin Report for " + displayDate + " (sorted by profit):");
