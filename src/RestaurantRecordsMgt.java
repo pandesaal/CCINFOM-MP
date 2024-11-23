@@ -155,7 +155,7 @@ public class RestaurantRecordsMgt {
     boolean programRun = true;
 
     while (programRun) {
-        String query = "SELECT customer_id, first_name, last_name FROM Customers;";
+        String query = "SELECT customer_id, firstname, lastname FROM Customers;";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query);
              ResultSet resultSet = pstmt.executeQuery()) {
@@ -172,7 +172,7 @@ public class RestaurantRecordsMgt {
             while (resultSet.next()) {
                 hasCustomers = true;
                 int id = resultSet.getInt("customer_id");
-                String name = resultSet.getString("first_name") + " " + resultSet.getString("last_name");
+                String name = resultSet.getString("firstname") + " " + resultSet.getString("lastname");
 
                 customerIds.add(id);
                 System.out.printf("%-10d %-20s\n", id, name);
@@ -192,7 +192,7 @@ public class RestaurantRecordsMgt {
 
                     if (customerIds.contains(id)) {
                         query = """
-                                SELECT c.first_name, c.last_name, o.order_id, o.order_type, o.order_datetime
+                                SELECT c.firstname, c.lastname, o.order_id, o.order_type, o.order_datetime
                                 FROM Customers c
                                 JOIN Orders o ON c.customer_id = o.customer_id
                                 WHERE c.customer_id = ?
