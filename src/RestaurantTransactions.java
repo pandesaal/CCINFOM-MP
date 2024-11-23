@@ -69,7 +69,7 @@ public class RestaurantTransactions {
         while (programRun) {
 
         try {
-            String showCustomersQuery = "SELECT customer_id, CONCAT('first_name', ' ', 'last_name') AS name FROM Customers";
+            String showCustomersQuery = "SELECT customer_id, first_name, last_name FROM Customers";
             try (PreparedStatement stmt = connection.prepareStatement(showCustomersQuery);
                 ResultSet rs = stmt.executeQuery()) {
                 List<List<Object>> rowsCustomer = new ArrayList<>();
@@ -77,10 +77,11 @@ public class RestaurantTransactions {
                 System.out.println("Current customers in the database:");
                 while (rs.next()) {
                     int customerId = rs.getInt("customer_id");
-                    String customerName = rs.getString("name");
+                    String firstName = rs.getString("first_name");
+                    String lastName = rs.getString("last_name");
                 
-                    rowsCustomer.add(List.of(customerId, customerName));
-                    System.out.printf("[%d] %s\n", customerId, customerName);
+                    rowsCustomer.add(List.of(customerId, firstName, lastName));
+                    System.out.printf("[%d] %s %s\n", customerId, firstName, lastName);
                 }
             }
 
