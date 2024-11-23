@@ -325,7 +325,13 @@ public class RestaurantReports {
                         e.first_name,
                         e.last_name,
                         COUNT(a.order_id) AS num_of_shifts,
-                        (COUNT(a.order_id) * TIMESTAMPDIFF(HOUR, ts.time_start, ts.time_end)) AS total_hours_worked
+                         SUM(
+                              CASE
+                                  WHEN ts.time_end < ts.time_start THEN TIMESTAMPDIFF(HOUR, ts.time_start, '24:00:00')
+                                                 + TIMESTAMPDIFF(HOUR, '00:00:00', ts.time_end)
+                                            ELSE TIMESTAMPDIFF(HOUR, ts.time_start, ts.time_end)
+                                        END
+                                    ) AS total_hours_worked
                     FROM
                         Employee e
                     JOIN
@@ -338,6 +344,8 @@ public class RestaurantReports {
                         o.order_datetime LIKE ?
                     GROUP BY
                         e.employee_id, e.first_name, e.last_name, ts.time_start, ts.time_end
+                    ORDER BY
+                        total_hours_worked DESC;
                     """;
 
                         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -345,7 +353,7 @@ public class RestaurantReports {
 
                             try (ResultSet resultSet = pstmt.executeQuery()) {
                                 List<Integer> rows = new ArrayList<>();
-                                System.out.println("Employee Shift Report: ");
+                                System.out.println("Employee Shift Report (ordered by shifts): ");
                                 System.out.printf("%-10s %-15s %-15s %-15s %-15s\n", "Emp ID", "First Name", "Last Name", "Shifts", "Total Hours");
                                 System.out.println("-".repeat(100));
 
