@@ -118,10 +118,10 @@ public class RestaurantTransactions {
                 String insertCustomerQuery = "INSERT INTO Customers (last_name, first_name, email, phonenumber, address) VALUES (?, ?, ?, ?, ?)";
                 try (PreparedStatement insertCustomerPstmt = connection.prepareStatement(insertCustomerQuery)) {
                     insertCustomerPstmt.setString(1, customerLastName);
-                    insertCustomerPstmt.setString(1, customerFirstName);
-                    insertCustomerPstmt.setString(1, customerPhone);
-                    insertCustomerPstmt.setString(2, customerEmail);
-                    insertCustomerPstmt.setString(3, customerAddress);
+                    insertCustomerPstmt.setString(2, customerFirstName);
+                    insertCustomerPstmt.setString(3, customerPhone);
+                    insertCustomerPstmt.setString(4, customerEmail);
+                    insertCustomerPstmt.setString(5, customerAddress);
                     insertCustomerPstmt.executeUpdate();
                     System.out.println("New customer created successfully!");
                     
