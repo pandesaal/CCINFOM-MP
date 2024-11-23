@@ -163,9 +163,9 @@ public class RestaurantRecordsMgt {
             List<Integer> customerIds = new ArrayList<>();
 
             System.out.println("List of all customers:");
-            System.out.println("-".repeat(50));
-            System.out.printf("%-10s %-20s\n", "Customer ID", "Name");
-            System.out.println("-".repeat(50));
+            System.out.println("-".repeat(100));
+            System.out.printf("%-15s %-50s\n", "Customer ID", "Name");
+            System.out.println("-".repeat(100));
 
             boolean hasCustomers = false;
 
@@ -175,7 +175,7 @@ public class RestaurantRecordsMgt {
                 String name = resultSet.getString("firstname") + " " + resultSet.getString("lastname");
 
                 customerIds.add(id);
-                System.out.printf("%-10d %-20s\n", id, name);
+                System.out.printf("%-15d %-50s\n", id, name);
             }
 
             if (!hasCustomers) {
@@ -183,7 +183,7 @@ public class RestaurantRecordsMgt {
                 break;
             }
 
-            System.out.println("-".repeat(50));
+            System.out.println("-".repeat(100));
             boolean inputRun = true;
 
             while (inputRun) {

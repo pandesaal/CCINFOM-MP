@@ -24,15 +24,6 @@ CREATE TABLE IF NOT EXISTS Employee (
     FOREIGN KEY (time_shiftid) REFERENCES TimeShift(time_shiftid)
 );
 
-CREATE TABLE IF NOT EXISTS Payment (
-    payment_id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT NOT NULL,
-    amount_paid DECIMAL(10, 2) NOT NULL CHECK (amount_paid >= 0),
-    payment_method ENUM('Cash', 'Credit Card') NOT NULL,
-    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (order_id) REFERENCES Orders(order_id)
-);
-
 INSERT INTO Roles (role_name) VALUES
 ('Waiter'),
 ('Chef'),
@@ -188,6 +179,15 @@ VALUES
     (5, 13, 1),  -- Peach Mango Pie: 1
     (5, 15, 1);  -- Mango Shake: 1
 
+
+CREATE TABLE IF NOT EXISTS Payment (
+    payment_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    amount_paid DECIMAL(10, 2) NOT NULL CHECK (amount_paid >= 0),
+    payment_method ENUM('Cash', 'Credit Card') NOT NULL,
+    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES Orders(order_id)
+);
 
 CREATE TABLE IF NOT EXISTS Assigned_Employee_to_Order (
     order_id INT NOT NULL,

@@ -226,7 +226,7 @@ public class RestaurantReports {
                 }
 
                 String query = """
-                    SELECT 
+                    SELECT\s
                         COUNT(DISTINCT o.order_id) AS total_orders,
                         SUM(oi.quantity * i.sell_price) AS total_amount_spent,
                         i.product_name AS most_bought_product,
@@ -236,18 +236,20 @@ public class RestaurantReports {
                     JOIN Inventory i ON oi.product_id = i.product_id
                     WHERE o.order_datetime LIKE ?
                     GROUP BY i.product_name
-                    ORDER BY most_bought_quantity DESC
-                    LIMIT 1;
-                    """;
+                    ORDER BY most_bought_quantity DESC;
+                   \s""";
 
                 try (PreparedStatement statement = connection.prepareStatement(query)) {
-                statement.setString(1, dateFilter + "%");
+                statement.setString(1, date + "%");
 
                 try (ResultSet resultSet = statement.executeQuery()) {
                     System.out.println("\nCustomer Order Report:");
                     System.out.println("-".repeat(60));
 
-                    if (resultSet.next()) {
+                    boolean ordersExist = false;
+
+                    while (resultSet.next()) {
+                        ordersExist = true;
                         int totalOrders = resultSet.getInt("total_orders");
                         double totalAmountSpent = resultSet.getDouble("total_amount_spent");
                         String mostBoughtProduct = resultSet.getString("most_bought_product");
@@ -257,7 +259,9 @@ public class RestaurantReports {
                         System.out.printf("Total Amount Spent: %.2f\n", totalAmountSpent);
                         System.out.printf("Most Bought Product: %s (%d units)\n",
                                 mostBoughtProduct, mostBoughtQuantity);
-                    } else {
+                    }
+
+                    if (!ordersExist){
                         System.out.println("No orders found for the specified date.");
                     }
 
