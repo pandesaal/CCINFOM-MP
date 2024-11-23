@@ -69,7 +69,7 @@ public class RestaurantTransactions {
         while (programRun) {
 
         try {
-            String showCustomersQuery = "SELECT customer_id, first_name, last_name FROM Customers";
+            String showCustomersQuery = "SELECT customer_id, firstname, lastname FROM Customers";
             try (PreparedStatement stmt = connection.prepareStatement(showCustomersQuery);
                 ResultSet rs = stmt.executeQuery()) {
                 List<List<Object>> rowsCustomer = new ArrayList<>();
@@ -77,8 +77,8 @@ public class RestaurantTransactions {
                 System.out.println("Current customers in the database:");
                 while (rs.next()) {
                     int customerId = rs.getInt("customer_id");
-                    String firstName = rs.getString("first_name");
-                    String lastName = rs.getString("last_name");
+                    String firstName = rs.getString("firstname");
+                    String lastName = rs.getString("lastname");
                 
                     rowsCustomer.add(List.of(customerId, firstName, lastName));
                     System.out.printf("[%d] %s %s\n", customerId, firstName, lastName);
@@ -115,13 +115,13 @@ public class RestaurantTransactions {
                 String customerAddress = Utilities.getStringInput("Enter address: ");
 
                 // Insert new customer into database
-                String insertCustomerQuery = "INSERT INTO Customers (last_name, first_name, email, phonenumber, address) VALUES (?, ?, ?, ?, ?)";
+                String insertCustomerQuery = "INSERT INTO Customers (lastname, firstname, email, phonenumber, address) VALUES (?, ?, ?, ?, ?)";
                 try (PreparedStatement insertCustomerPstmt = connection.prepareStatement(insertCustomerQuery)) {
                     insertCustomerPstmt.setString(1, customerLastName);
-                    insertCustomerPstmt.setString(1, customerFirstName);
-                    insertCustomerPstmt.setString(1, customerPhone);
-                    insertCustomerPstmt.setString(2, customerEmail);
-                    insertCustomerPstmt.setString(3, customerAddress);
+                    insertCustomerPstmt.setString(2, customerFirstName);
+                    insertCustomerPstmt.setString(3, customerPhone);
+                    insertCustomerPstmt.setString(4, customerEmail);
+                    insertCustomerPstmt.setString(5, customerAddress);
                     insertCustomerPstmt.executeUpdate();
                     System.out.println("New customer created successfully!");
                     
