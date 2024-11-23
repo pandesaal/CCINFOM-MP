@@ -399,8 +399,17 @@ public class RestaurantTransactions {
 
     while (programRun) {
         try {
-            String query = "SELECT order_id, customer_id, total_amount, payment_status " +
-                           "FROM Orders WHERE payment_status = 'Unpaid'";
+            String query = """
+                SELECT o.order_id, o.customer_id, 
+                       SUM(oi.quantity * i.sell_price) AS total_amount,
+                       o.payment_status
+                FROM Orders o
+                JOIN Order_Item oi ON o.order_id = oi.order_id
+                JOIN Inventory i ON oi.product_id = i.product_id
+                WHERE o.payment_status = 'Unpaid'
+                GROUP BY o.order_id, o.customer_id, o.payment_status;
+            """;
+
             List<List<Object>> orders = new ArrayList<>();
             try (PreparedStatement preparedStatement = connection.prepareStatement(query);
                  ResultSet resultSet = preparedStatement.executeQuery()) {
