@@ -68,7 +68,7 @@ public class RestaurantReports {
         }
     }
 
-showSalesReport() {
+private void showSalesReport() {
         boolean programRun = true;
         while (programRun) {
             try {
