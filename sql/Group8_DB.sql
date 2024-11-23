@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS Customers (
     address VARCHAR(200) NOT NULL
 );
 
-INSERT INTO Customers (customer_id, lastname, firstname, email, phonenumber, address)
+INSERT INTO Customers (customer_id, last_name, first_name, email, phonenumber, address)
 VALUES
     (101, 'Smith', 'John', 'john.smith@example.com', '09171234567', '123 Main St, Cityville'),
     (102, 'Doe', 'Jane', 'jane.doe@example.com', '09171234568', '456 Oak St, Townsville'),
