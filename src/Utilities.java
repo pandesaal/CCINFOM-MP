@@ -253,10 +253,20 @@ public class Utilities {
     }
 
 
-    public static void emptyAllShifts(Connection connection) {
+     public static void emptyAllShifts(Connection connection) {
         boolean continueFunction = true;
         while (continueFunction) {
             try {
+                // Check if there are any shifts assigned
+                String checkQuery = "SELECT COUNT(*) FROM Employee WHERE time_shiftid IS NOT NULL";
+                try (PreparedStatement checkStmt = connection.prepareStatement(checkQuery);
+                     ResultSet resultSet = checkStmt.executeQuery()) {
+                    if (resultSet.next() && resultSet.getInt(1) == 0) {
+                        System.out.println("All shifts are already empty. Exiting...");
+                        return;
+                    }
+                }
+
                 System.out.println("Are you sure you want to remove all shifts for all employees?");
                 int confirmation = Utilities.getUserInput("Confirm (1 - Yes, 2 - No): ");
                 if (confirmation != 1) {
@@ -267,7 +277,8 @@ public class Utilities {
                 String query = "UPDATE Employee SET time_shiftid = NULL";
                 try (PreparedStatement updateStmt = connection.prepareStatement(query)) {
                     int rowsAffected = updateStmt.executeUpdate();
-                    System.out.println(rowsAffected + " shifts successfully cleared.");
+                    System.out.println("Shifts successfully cleared.");
+                    return; // Exit after successfully clearing shifts
                 }
 
             } catch (SQLException e) {
