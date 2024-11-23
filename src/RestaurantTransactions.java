@@ -354,8 +354,9 @@ public class RestaurantTransactions {
         try {
             String query = "SELECT order_id, customer_id, total_amount, payment_status " +
                            "FROM Orders WHERE payment_status = 'Unpaid'";
-            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-                ResultSet resultSet = preparedStatement.executeQuery();
+            List<List<Object>> orders = new ArrayList<>();
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query);
+                 ResultSet resultSet = preparedStatement.executeQuery()) {
 
                 if (!resultSet.isBeforeFirst()) {
                     System.out.println("No unpaid orders found.");
@@ -363,8 +364,6 @@ public class RestaurantTransactions {
                 }
 
                 System.out.println("Unpaid Orders:");
-                List<List<Object>> orders = new ArrayList<>();
-
                 while (resultSet.next()) {
                     int orderId = resultSet.getInt("order_id");
                     int customerId = resultSet.getInt("customer_id");
@@ -374,82 +373,106 @@ public class RestaurantTransactions {
                     System.out.printf("[Order ID: %d] Customer ID: %d, Total Amount: %.2f\n",
                                       orderId, customerId, totalAmount);
                 }
+            }
 
-                boolean inputRun = true;
-                while (inputRun) {
-                    try {
-                        int orderId = Utilities.getUserInput("Enter Order ID to process payment: ");
-                        List<Object> order = orders.stream()
-                                                    .filter(o -> (int) o.getFirst() == orderId)
-                                                    .findFirst()
-                                                    .orElse(null);
+            boolean inputRun = true;
+            while (inputRun) {
+                try {
+                    int orderId = Utilities.getUserInput("Enter Order ID to process payment: ");
+                    List<Object> order = orders.stream()
+                                                .filter(o -> (int) o.get(0) == orderId)
+                                                .findFirst()
+                                                .orElse(null);
 
-                        if (order == null) {
-                            throw new InputMismatchException("Invalid Order ID.");
-                        }
-
-                        double totalAmount = (double) order.get(2);
-                        int customerId = (int) order.get(1);
-                        System.out.printf("Processing payment for Order ID %d (Total Amount: %.2f)\n", orderId, totalAmount);
-
-                        System.out.println("Payment Methods:");
-                        System.out.println("[1] Cash");
-                        System.out.println("[2] Credit Card");
-                        int paymentMethodChoice = Utilities.getUserInput("Choose payment method (1 or 2): ");
-                        String paymentMethod = switch (paymentMethodChoice) {
-                            case 1 -> "Cash";
-                            case 2 -> "Credit Card";
-                            default -> throw new InputMismatchException("Invalid payment method choice.");
-                        };
-
-                        double paymentAmount = Utilities.getUserInput("Enter payment amount: ");
-                        if (paymentAmount < totalAmount) {
-                            throw new InputMismatchException("Payment amount is less than the total amount.");
-                        }
-
-                        connection.setAutoCommit(false);
-
-                        query = "INSERT INTO Payment (order_id, amount_paid, payment_method, transaction_date) " +
-                                "VALUES (?, ?, ?, NOW())";
-                        try (PreparedStatement paymentStmt = connection.prepareStatement(query)) {
-                            paymentStmt.setInt(1, orderId);
-                            paymentStmt.setDouble(2, paymentAmount);
-                            paymentStmt.setString(3, paymentMethod);
-                            paymentStmt.executeUpdate();
-                        }
-
-                        query = "UPDATE Orders SET payment_status = 'Paid' WHERE order_id = ?";
-                        try (PreparedStatement orderStmt = connection.prepareStatement(query)) {
-                            orderStmt.setInt(1, orderId);
-                            orderStmt.executeUpdate();
-                        }
-
-                        connection.commit();
-
-                        System.out.printf("Payment for Order ID %d processed successfully.\n", orderId);
-                        System.out.println("Receipt:");
-                        System.out.printf("Order ID: %d\n", orderId);
-                        System.out.printf("Customer ID: %d\n", customerId);
-                        System.out.printf("Total Amount: %.2f\n", totalAmount);
-                        System.out.printf("Amount Paid: %.2f\n", paymentAmount);
-                        System.out.printf("Payment Method: %s\n", paymentMethod);
-                        System.out.printf("Change: %.2f\n", paymentAmount - totalAmount);
-
-                        inputRun = false;
-                    } catch (InputMismatchException e) {
-                        System.out.println(e.getMessage());
-                    } catch (SQLException e) {
-                        System.out.println("Error processing payment. Rolling back transaction...");
-                        connection.rollback();
-                        inputRun = false;
-                    } finally {
-                        connection.setAutoCommit(true);
+                    if (order == null) {
+                        throw new InputMismatchException("Invalid Order ID.");
                     }
+
+                    double totalAmount = (double) order.get(2);
+                    int customerId = (int) order.get(1);
+                    System.out.printf("Processing payment for Order ID %d (Total Amount: %.2f)\n", orderId, totalAmount);
+
+                    System.out.println("Payment Methods:");
+                    System.out.println("[1] Cash");
+                    System.out.println("[2] Credit Card");
+                    int paymentMethodChoice = Utilities.getUserInput("Choose payment method (1 or 2): ");
+                    String paymentMethod = switch (paymentMethodChoice) {
+                        case 1 -> "Cash";
+                        case 2 -> "Credit Card";
+                        default -> throw new InputMismatchException("Invalid payment method choice.");
+                    };
+
+                    double paymentAmount = Utilities.getUserInput("Enter payment amount: ");
+                    if (paymentAmount < totalAmount) {
+                        throw new InputMismatchException("Payment amount is less than the total amount.");
+                    }
+
+                    connection.setAutoCommit(false);
+
+                    query = "INSERT INTO Payment (order_id, amount_paid, payment_method, transaction_date) " +
+                            "VALUES (?, ?, ?, NOW())";
+                    try (PreparedStatement paymentStmt = connection.prepareStatement(query)) {
+                        paymentStmt.setInt(1, orderId);
+                        paymentStmt.setDouble(2, paymentAmount);
+                        paymentStmt.setString(3, paymentMethod);
+                        paymentStmt.executeUpdate();
+                    }
+
+                    query = "UPDATE Orders SET payment_status = 'Paid' WHERE order_id = ?";
+                    try (PreparedStatement orderStmt = connection.prepareStatement(query)) {
+                        orderStmt.setInt(1, orderId);
+                        orderStmt.executeUpdate();
+                    }
+
+                    connection.commit();
+
+                    System.out.printf("Payment for Order ID %d processed successfully.\n", orderId);
+                    System.out.println("Receipt:");
+                    System.out.printf("Order ID: %d\n", orderId);
+                    System.out.printf("Customer ID: %d\n", customerId);
+                    System.out.printf("Total Amount: %.2f\n", totalAmount);
+                    System.out.printf("Amount Paid: %.2f\n", paymentAmount);
+                    System.out.printf("Payment Method: %s\n", paymentMethod);
+                    System.out.printf("Change: %.2f\n", paymentAmount - totalAmount);
+
+                    inputRun = false;
+                } catch (InputMismatchException e) {
+                    System.out.println(e.getMessage());
+                } catch (SQLException e) {
+                    System.out.println("Error processing payment. Rolling back transaction...");
+                    connection.rollback();
+                    inputRun = false;
+                } finally {
+                    connection.setAutoCommit(true);
                 }
             }
-        } catch (SQLException e) { //for runtime errors
-            System.out.println("Error fetching unpaid orders. Please try again later."); 
+        } catch (SQLException e) {
+            System.out.println("Error fetching unpaid orders. Please try again later.");
         }
+
+        boolean validChoice = false;
+        while (!validChoice) {
+            try {
+                int choice = Utilities.getUserInput("Process another payment? (1 - Yes, 2 - No): ");
+                switch (choice) {
+                    case 1:
+                        validChoice = true;
+                        break;
+                    case 2:
+                        System.out.println("Exiting process payment menu...");
+                        programRun = false;
+                        validChoice = true;
+                        break;
+                    default:
+                        System.out.println("Invalid choice. Please enter 1 or 2.");
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please try again.");
+            }
+        }
+    }
+}
+
 
         boolean validChoice = false;
         while (!validChoice) {
