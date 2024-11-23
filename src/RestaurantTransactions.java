@@ -286,7 +286,7 @@ public class RestaurantTransactions {
                                     pstmt.setInt(1, employeeID);
                                     pstmt.executeUpdate();
                                 } catch (SQLException e) {
-                                    System.out.println("Error inserting assigned employee: " + e.getMessage());
+                                    System.out.println("Error inserting assigned employee: ");
                                 }
                             }
                         }
@@ -299,7 +299,7 @@ public class RestaurantTransactions {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Error processing order: " + e.getMessage());
+            System.out.println("Error processing order: ");
         } catch (InputMismatchException e) {
             System.out.println("Invalid input, try again.");
         }
@@ -528,7 +528,7 @@ public class RestaurantTransactions {
                 } catch (InputMismatchException e) {
                     System.out.println(e.getMessage());
                 } catch (SQLException e) {
-                    System.out.println("Error processing payment. Rolling back transaction..." + e.getMessage());
+                    System.out.println("Error processing payment. Rolling back transaction...");
                     connection.rollback();
                     inputRun = false;
                 } finally {
@@ -536,7 +536,7 @@ public class RestaurantTransactions {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Error fetching unpaid orders: " + e.getMessage());
+            System.out.println("Error fetching unpaid orders: ");
         }
 
         boolean validChoice = false;
