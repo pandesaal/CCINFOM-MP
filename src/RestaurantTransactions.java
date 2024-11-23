@@ -178,11 +178,20 @@ public class RestaurantTransactions {
                     do {
                         orderQty = Utilities.getUserInput("Amount to order: ");
                         updatedQuantity = (int) row.get(2) - orderQty;
+
+                        if (updatedQuantity < 0){
+                            System.out.print("Quantity ordered exceeds stock quantity. Try again.");
+                        }
                     } while (updatedQuantity < 0);
 
                     do {
                         System.out.print("1 - Dine-in\n2 - Takeout\n3 - Delivery\n");
                         orderType = Utilities.getUserInput("Order type: ");
+
+                        if (orderType < 1 || orderType > 3){
+                            System.out.print("Invalid order type, Try again.");
+                        }
+                        
                     } while (orderType < 1 || orderType > 3);
 
                     int numOfEmployees = Utilities.getUserInput("Number of employees assigned to order: ");
