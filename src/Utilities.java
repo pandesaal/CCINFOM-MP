@@ -51,6 +51,10 @@ public class Utilities {
         return choice;
     }
 
+    public static String getStringInput(String prompt) {
+        System.out.print(prompt);
+        return sc.nextLine();  // Read the whole line as a string
+    }
 
        // helper functions for transactions/assignshift method
     public static void removeEmployeeFromShift(Connection connection) {
