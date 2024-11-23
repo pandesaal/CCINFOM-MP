@@ -408,13 +408,13 @@ public class RestaurantTransactions {
         try {
             String query = """
             SELECT o.order_id, o.customer_id,
-                                   SUM(oi.quantity * i.sell_price) AS total_amount,
-                                   o.order_status
-                            FROM Orders o
-                            JOIN Order_Item oi ON o.order_id = oi.order_id
-                            JOIN Inventory i ON oi.product_id = i.product_id
-                            WHERE o.order_status = 'In Progress'
-                            GROUP BY o.order_id, o.customer_id, o.order_status;
+                   SUM(oi.quantity * i.sell_price) AS total_amount,
+                   o.order_status
+            FROM Orders o
+            JOIN Order_Item oi ON o.order_id = oi.order_id
+            JOIN Inventory i ON oi.product_id = i.product_id
+            WHERE o.order_status = 'In Progress'
+            GROUP BY o.order_id, o.customer_id, o.order_status;
             """;
 
             List<List<Object>> orders = new ArrayList<>();
@@ -441,7 +441,14 @@ public class RestaurantTransactions {
             boolean inputRun = true;
             while (inputRun) {
                 try {
-                    int orderId = Utilities.getUserInput("Enter Order ID to process payment: ");
+                    int orderId = Utilities.getUserInput("Enter Order ID to process payment (Enter 0 to go back): ");
+
+                    // Exit the loop if the user enters 0
+                    if (orderId == 0) {
+                        System.out.println("Returning to previous menu...");
+                        return;
+                    }
+
                     List<Object> order = orders.stream()
                             .filter(o -> (int) o.get(0) == orderId)
                             .findFirst()
@@ -516,7 +523,7 @@ public class RestaurantTransactions {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Error fetching unpaid orders: ");
+            System.out.println("Error fetching unpaid orders.");
         }
 
         boolean validChoice = false;
