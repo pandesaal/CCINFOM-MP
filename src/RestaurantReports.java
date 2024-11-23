@@ -112,7 +112,7 @@ public class RestaurantReports {
                 Subquery determines the Top-Selling Product for each day 
             */
             query = """
-                    SELECT\s
+                    SELECT
                         DATE(o.order_datetime) AS sales_date,
                         SUM(oi.quantity * i.sell_price) AS total_sales,
                         AVG(oi.quantity * i.sell_price) AS average_sales,
@@ -122,12 +122,12 @@ public class RestaurantReports {
                     JOIN Order_Item oi ON o.order_id = oi.order_id
                     JOIN Inventory i ON oi.product_id = i.product_id
                     JOIN (
-                        SELECT\s
+                        SELECT
                             DATE(o.order_datetime) AS sub_sales_date,
                             i.product_name,
                             MAX(product_sales) AS product_sales
                         FROM (
-                            SELECT\s
+                            SELECT
                                 DATE(o.order_datetime) AS sub_sales_date,
                                 oi.product_id,
                                 i.product_name,
@@ -142,7 +142,7 @@ public class RestaurantReports {
                     ) AS sub_query ON DATE(o.order_datetime) = sub_query.sub_sales_date
                     WHERE o.order_datetime LIKE ?
                     GROUP BY DATE(o.order_datetime), sub_query.product_name, sub_query.product_sales;
-                   \s""";
+                   """;
             
                 try (PreparedStatement statement = connection.prepareStatement(query)) {
                     statement.setString(1, date + "%");
@@ -447,13 +447,14 @@ public class RestaurantReports {
                         "   JOIN Order_Item oi ON i.product_id = oi.product_id " +
                         "   JOIN Orders o ON o.order_id = oi.order_id " +
                         "WHERE o.order_datetime LIKE ? " +
-                        "GROUP BY i.product_id, o.order_id, o.order_datetime;";
+                        "GROUP BY i.product_id, o.order_id, o.order_datetime " +
+                        "ORDER BY total_profit DESC;";
 
                 try (PreparedStatement statement = connection.prepareStatement(query)) {
                     statement.setString(1, date);
 
                     try (ResultSet result = statement.executeQuery()) {
-                        System.out.println("\nProfit Margin Report for " + displayDate + ":");
+                        System.out.println("\nProfit Margin Report for " + displayDate + " (sorted by profit):");
                         System.out.println("-".repeat(120));
                         System.out.printf("%-10s %-10s %-20s %-15s %-15s %-10s %-10s %-10s\n",
                                 "Product ID", "Order ID", "Order Date", "Total Orders", "Total Quantity", "Revenue", "Cost", "Profit");

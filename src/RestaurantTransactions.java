@@ -72,15 +72,13 @@ public class RestaurantTransactions {
             String showCustomersQuery = "SELECT customer_id, first_name, last_name FROM Customers";
             try (PreparedStatement stmt = connection.prepareStatement(showCustomersQuery);
                 ResultSet rs = stmt.executeQuery()) {
-                List<List<Object>> rowsCustomer = new ArrayList<>();
                
                 System.out.println("Current customers in the database:");
                 while (rs.next()) {
                     int customerId = rs.getInt("customer_id");
                     String firstName = rs.getString("first_name");
                     String lastName = rs.getString("last_name");
-                
-                    rowsCustomer.add(List.of(customerId, firstName, lastName));
+
                     System.out.printf("[%d] %s %s\n", customerId, firstName, lastName);
                 }
             }
@@ -420,7 +418,7 @@ public class RestaurantTransactions {
     while (programRun) {
         try {
             String query = """
-                SELECT o.order_id, o.customer_id, 
+                SELECT o.order_id, o.customer_id,\s
                        SUM(oi.quantity * i.sell_price) AS total_amount,
                        o.payment_status
                 FROM Orders o
@@ -428,7 +426,7 @@ public class RestaurantTransactions {
                 JOIN Inventory i ON oi.product_id = i.product_id
                 WHERE o.payment_status = 'Unpaid'
                 GROUP BY o.order_id, o.customer_id, o.payment_status;
-            """;
+           \s""";
 
             List<List<Object>> orders = new ArrayList<>();
             try (PreparedStatement preparedStatement = connection.prepareStatement(query);

@@ -151,239 +151,221 @@ public class RestaurantRecordsMgt {
         }
     }
 
-    
-private void viewCustomer() {
-    boolean programRun = true;
-
-    while (programRun) {
-        String query = "SELECT customer_id, first_name, last_name FROM Customers;";
-
-        try (PreparedStatement pstmt = connection.prepareStatement(query);
-             ResultSet resultSet = pstmt.executeQuery()) {
-
-            List<Integer> customerIds = new ArrayList<>();
-
-            System.out.println("List of all customers:");
-            System.out.println("-".repeat(100));
-            System.out.printf("%-15s %-50s\n", "Customer ID", "Name");
-            System.out.println("-".repeat(100));
-
-            boolean hasCustomers = false;
-
-            while (resultSet.next()) {
-                hasCustomers = true;
-                int id = resultSet.getInt("customer_id");
-                String name = resultSet.getString("first_name") + " " + resultSet.getString("last_name");
-
-                customerIds.add(id);
-                System.out.printf("%-15d %-50s\n", id, name);
-            }
-
-            if (!hasCustomers) {
-                System.out.println("No customers found.");
-                break;
-            }
-
-            System.out.println("-".repeat(100));
-            boolean inputRun = true;
-
-            while (inputRun) {
-                try {
-                    int id = Utilities.getUserInput("Enter Customer ID to view: ");
-
-                    if (customerIds.contains(id)) {
-                        query = "SELECT * FROM Customers WHERE customer_id = ?;";
-
-                        try (PreparedStatement customerStmt = connection.prepareStatement(query)) {
-                            customerStmt.setInt(1, id);
-
-                            try (ResultSet customerDetails = customerStmt.executeQuery()) {
-                                if (customerDetails.next()) {
-                                    System.out.println("\nCustomer Details:");
-                                    System.out.println("-".repeat(50));
-                                    System.out.printf("ID: %d\n", customerDetails.getInt("customer_id"));
-                                    System.out.printf("Name: %s %s\n",
-                                            customerDetails.getString("first_name"),
-                                            customerDetails.getString("last_name"));
-                                    System.out.printf("Email: %s\n", customerDetails.getString("email"));
-                                    System.out.printf("Phone: %s\n", customerDetails.getString("phonenumber"));
-                                    System.out.printf("Address: %s\n", customerDetails.getString("address"));
-                                    System.out.println("-".repeat(50));
-                                }
-                            }
-                        }
-
-                        query = """
-                                SELECT o.order_id, o.order_type, o.order_datetime
-                                FROM Orders o
-                                WHERE o.customer_id = ?
-                                ORDER BY o.order_datetime DESC;
-                                """;
-
-                        try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
-                            detailStmt.setInt(1, id);
-
-                            try (ResultSet detailResult = detailStmt.executeQuery()) {
-                                System.out.println("\nOrder History:");
-                                System.out.println("-".repeat(70));
-                                System.out.printf("%-10s %-15s %-20s\n", "Order ID", "Order Type", "Order Date");
-                                System.out.println("-".repeat(70));
-
-                                boolean hasRecords = false;
-
-                                while (detailResult.next()) {
-                                    hasRecords = true;
-
-                                    int orderId = detailResult.getInt("order_id");
-                                    String orderType = detailResult.getString("order_type");
-                                    String orderDate = detailResult.getString("order_datetime");
-
-                                    System.out.printf("%-10d %-15s %-20s\n", orderId, orderType, orderDate);
-                                }
-
-                                if (!hasRecords) {
-                                    System.out.println("No order history found for this customer.");
-                                }
-
-                                System.out.println("-".repeat(70));
-                            }
-                        }
-
-                        boolean validChoice = false;
-                        while (!validChoice) {
-                            int choice = Utilities.getUserInput("Continue viewing customer records? (1 - yes, 2 - no): ");
-
-                            switch (choice) {
-                                case 1 -> validChoice = true;
-                                case 2 -> {
-                                    System.out.println("Exiting view customer menu...");
-                                    programRun = false;
-                                    inputRun = false;
-                                    validChoice = true;
-                                }
-                                default -> System.out.println("Invalid choice. Please enter 1 or 2.");
-                            }
-                        }
-                    } else {
-                        throw new InputMismatchException("Customer ID not found.");
-                    }
-                } catch (InputMismatchException e) {
-                    System.out.println("Error: " + e.getMessage());
-                } catch (SQLException e) {
-                    System.out.println("Database error: " + e.getMessage());
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Query error: " + e.getMessage());
-        }
-    }
-}
-
-
-        private void viewEmployee() {
+    private void viewCustomer() {
         boolean programRun = true;
+
         while (programRun) {
-            String query = "SELECT employee_id, first_name, last_name FROM Employee;";
+            String query = "SELECT customer_id, first_name, last_name FROM Customers;";
 
             try (PreparedStatement pstmt = connection.prepareStatement(query);
                  ResultSet resultSet = pstmt.executeQuery()) {
 
-                List<Integer> employeeIds = new ArrayList<>();
+                List<Integer> customerIds = new ArrayList<>();
 
-                System.out.println("List of all employees: ");
+                System.out.println("List of all customers:");
+                System.out.println("-".repeat(100));
+                System.out.printf("%-15s %-50s\n", "Customer ID", "Name");
+                System.out.println("-".repeat(100));
+
+                boolean hasCustomers = false;
+
                 while (resultSet.next()) {
-                    int id = resultSet.getInt("employee_id");
-                    String firstName = resultSet.getString("first_name");
-                    String lastName = resultSet.getString("last_name");
+                    hasCustomers = true;
+                    int id = resultSet.getInt("customer_id");
+                    String name = resultSet.getString("first_name") + " " + resultSet.getString("last_name");
 
-                    employeeIds.add(id);
-
-                    System.out.printf("[%d] %s %s\n", id, firstName, lastName);
+                    customerIds.add(id);
+                    System.out.printf("%-15d %-50s\n", id, name);
                 }
 
-                try {
-                    int id = Utilities.getUserInput("Employee ID of employee to view: ");
+                if (!hasCustomers) {
+                    System.out.println("No customers found.");
+                    break;
+                }
 
-                    if (employeeIds.contains(id)) {
+                System.out.println("-".repeat(100));
+                boolean inputRun = true;
 
-                        query = """
-                            SELECT e.first_name, e.last_name, r.role_name, t.shift_type, t.time_start, t.time_end
-                            FROM Employee e
-                            JOIN Roles r ON e.role_id = r.role_id
-                            LEFT JOIN TimeShift t ON e.time_shiftid = t.time_shiftid
-                            WHERE e.employee_id = ?
-                            ORDER BY e.employee_id;
-                            """;
+                while (inputRun) {
+                    try {
+                        int id = Utilities.getUserInput("Enter Customer ID to view: ");
 
-                        try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
-                            detailStmt.setInt(1, id);
-                            try (ResultSet detailResult = detailStmt.executeQuery()) {
+                        if (customerIds.contains(id)) {
+                            query = "SELECT * FROM Customers WHERE customer_id = ?;";
 
-                                System.out.println("\nEmployee Details for Employee ID: " + id);
-                                System.out.println("-".repeat(100));
-                                System.out.printf("%-10s %-15s %-15s %-20s %-20s %-20s %-20s\n",
-                                        "Employee ID", "First Name", "Last Name", "Role",
-                                        "Shift Type", "Start Time", "End Time");
-                                System.out.println("-".repeat(100));
+                            try (PreparedStatement customerStmt = connection.prepareStatement(query)) {
+                                customerStmt.setInt(1, id);
 
-                                boolean hasRecords = false;
-
-                                while (detailResult.next()) {
-                                    hasRecords = true;
-
-                                    String firstName = detailResult.getString("first_name");
-                                    String lastName = detailResult.getString("last_name");
-                                    String roleName = detailResult.getString("role_name");
-                                    String shiftType = detailResult.getString("shift_type");
-                                    Time startTime = detailResult.getTime("time_start");
-                                    Time endTime = detailResult.getTime("time_end");
-
-                                    System.out.printf(" %-10d %-15s %-15s %-20s %-20s %-20s %-20s\n",
-                                            id,
-                                            firstName != null ? firstName : "N/A",
-                                            lastName != null ? lastName : "N/A",
-                                            roleName != null ? roleName : "N/A",
-                                            shiftType != null ? shiftType : "N/A",
-                                            startTime != null ? startTime : "N/A",
-                                            endTime != null ? endTime : "N/A");
+                                try (ResultSet customerDetails = customerStmt.executeQuery()) {
+                                    if (customerDetails.next()) {
+                                        System.out.println("\nCustomer Details:");
+                                        System.out.println("-".repeat(50));
+                                        System.out.printf("ID: %d\n", customerDetails.getInt("customer_id"));
+                                        System.out.printf("Name: %s %s\n",
+                                                customerDetails.getString("first_name"),
+                                                customerDetails.getString("last_name"));
+                                        System.out.printf("Email: %s\n", customerDetails.getString("email"));
+                                        System.out.printf("Phone: %s\n", customerDetails.getString("phonenumber"));
+                                        System.out.printf("Address: %s\n", customerDetails.getString("address"));
+                                        System.out.println("-".repeat(50));
+                                    }
                                 }
-
-                                if (!hasRecords) {
-                                    System.out.println("No records found for this employee.");
-                                }
-
-                                System.out.println("-".repeat(100));
                             }
+
+                            query = """
+                                    SELECT o.order_id, o.order_type, o.order_datetime
+                                    FROM Orders o
+                                    WHERE o.customer_id = ?
+                                    ORDER BY o.order_datetime DESC;
+                                    """;
+
+                            try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
+                                detailStmt.setInt(1, id);
+
+                                try (ResultSet detailResult = detailStmt.executeQuery()) {
+                                    System.out.println("\nOrder History:");
+                                    System.out.println("-".repeat(70));
+                                    System.out.printf("%-10s %-15s %-20s\n", "Order ID", "Order Type", "Order Date");
+                                    System.out.println("-".repeat(70));
+
+                                    boolean hasRecords = false;
+
+                                    while (detailResult.next()) {
+                                        hasRecords = true;
+
+                                        int orderId = detailResult.getInt("order_id");
+                                        String orderType = detailResult.getString("order_type");
+                                        String orderDate = detailResult.getString("order_datetime");
+
+                                        System.out.printf("%-10d %-15s %-20s\n", orderId, orderType, orderDate);
+                                    }
+
+                                    if (!hasRecords) {
+                                        System.out.println("No order history found for this customer.");
+                                    }
+
+                                    System.out.println("-".repeat(70));
+                                }
+                            }
+
+                            boolean validChoice = false;
+                            while (!validChoice) {
+                                int choice = Utilities.getUserInput("Continue viewing customer records? (1 - yes, 2 - no): ");
+
+                                switch (choice) {
+                                    case 1 -> validChoice = true;
+                                    case 2 -> {
+                                        System.out.println("Exiting view customer menu...");
+                                        programRun = false;
+                                        inputRun = false;
+                                        validChoice = true;
+                                    }
+                                    default -> System.out.println("Invalid choice. Please enter 1 or 2.");
+                                }
+                            }
+                        } else {
+                            throw new InputMismatchException("Customer ID not found.");
                         }
-
-                    } else {
-                        throw new InputMismatchException("Employee ID not found.");
+                    } catch (InputMismatchException e) {
+                        System.out.println("Error: " + e.getMessage());
+                    } catch (SQLException e) {
+                        System.out.println("Database error: " + e.getMessage());
                     }
-                } catch (InputMismatchException e) {
-                    System.out.println(e.getMessage());
                 }
-
             } catch (SQLException e) {
                 System.out.println("Query error: " + e.getMessage());
-                boolean validChoice = false;
-                while (!validChoice) {
-                    int choice = Utilities.getUserInput("Query error occurred. Continue viewing employee records? (1 - yes, 2 - no): ");
+            }
+        }
+    }
 
-                    switch (choice) {
-                        case 1 -> validChoice = true;
-                        case 2 -> {
-                            System.out.println("Exiting view employees menu...");
-                            programRun = false;
-                            validChoice = true;
-                        }
-                        default -> System.out.println("Invalid choice. Please enter 1 or 2.");
-                    }
-                }
+    private void viewEmployee() {
+    boolean programRun = true;
+    while (programRun) {
+        String query = "SELECT employee_id, first_name, last_name FROM Employee;";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query);
+             ResultSet resultSet = pstmt.executeQuery()) {
+
+            List<Integer> employeeIds = new ArrayList<>();
+
+            System.out.println("List of all employees: ");
+            while (resultSet.next()) {
+                int id = resultSet.getInt("employee_id");
+                String firstName = resultSet.getString("first_name");
+                String lastName = resultSet.getString("last_name");
+
+                employeeIds.add(id);
+
+                System.out.printf("[%d] %s %s\n", id, firstName, lastName);
             }
 
+            try {
+                int id = Utilities.getUserInput("Employee ID of employee to view: ");
+
+                if (employeeIds.contains(id)) {
+
+                    query = """
+                        SELECT e.first_name, e.last_name, r.role_name, t.shift_type, t.time_start, t.time_end
+                        FROM Employee e
+                        JOIN Roles r ON e.role_id = r.role_id
+                        LEFT JOIN TimeShift t ON e.time_shiftid = t.time_shiftid
+                        WHERE e.employee_id = ?
+                        ORDER BY e.employee_id;
+                        """;
+
+                    try (PreparedStatement detailStmt = connection.prepareStatement(query)) {
+                        detailStmt.setInt(1, id);
+                        try (ResultSet detailResult = detailStmt.executeQuery()) {
+
+                            System.out.println("\nEmployee Details for Employee ID: " + id);
+                            System.out.println("-".repeat(100));
+                            System.out.printf("%-10s %-15s %-15s %-20s %-20s %-20s %-20s\n",
+                                    "Employee ID", "First Name", "Last Name", "Role",
+                                    "Shift Type", "Start Time", "End Time");
+                            System.out.println("-".repeat(100));
+
+                            boolean hasRecords = false;
+
+                            while (detailResult.next()) {
+                                hasRecords = true;
+
+                                String firstName = detailResult.getString("first_name");
+                                String lastName = detailResult.getString("last_name");
+                                String roleName = detailResult.getString("role_name");
+                                String shiftType = detailResult.getString("shift_type");
+                                Time startTime = detailResult.getTime("time_start");
+                                Time endTime = detailResult.getTime("time_end");
+
+                                System.out.printf(" %-10d %-15s %-15s %-20s %-20s %-20s %-20s\n",
+                                        id,
+                                        firstName != null ? firstName : "N/A",
+                                        lastName != null ? lastName : "N/A",
+                                        roleName != null ? roleName : "N/A",
+                                        shiftType != null ? shiftType : "N/A",
+                                        startTime != null ? startTime : "N/A",
+                                        endTime != null ? endTime : "N/A");
+                            }
+
+                            if (!hasRecords) {
+                                System.out.println("No records found for this employee.");
+                            }
+
+                            System.out.println("-".repeat(100));
+                        }
+                    }
+
+                } else {
+                    throw new InputMismatchException("Employee ID not found.");
+                }
+            } catch (InputMismatchException e) {
+                System.out.println(e.getMessage());
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Query error: " + e.getMessage());
             boolean validChoice = false;
             while (!validChoice) {
-                int choice = Utilities.getUserInput("Continue viewing employee records? (1 - yes, 2 - no): ");
+                int choice = Utilities.getUserInput("Query error occurred. Continue viewing employee records? (1 - yes, 2 - no): ");
 
                 switch (choice) {
                     case 1 -> validChoice = true;
@@ -396,7 +378,23 @@ private void viewCustomer() {
                 }
             }
         }
+
+        boolean validChoice = false;
+        while (!validChoice) {
+            int choice = Utilities.getUserInput("Continue viewing employee records? (1 - yes, 2 - no): ");
+
+            switch (choice) {
+                case 1 -> validChoice = true;
+                case 2 -> {
+                    System.out.println("Exiting view employees menu...");
+                    programRun = false;
+                    validChoice = true;
+                }
+                default -> System.out.println("Invalid choice. Please enter 1 or 2.");
+            }
+        }
     }
+}
 
     private void viewOrder() {
         boolean programRun = true;
