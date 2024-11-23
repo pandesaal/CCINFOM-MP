@@ -216,19 +216,20 @@ private void showSalesReport() {
             }
 
             String query = """
-                SELECT 
-                    COUNT(DISTINCT o.order_id) AS total_orders,
-                    SUM(oi.quantity * i.sell_price) AS total_amount_spent,
-                    i.product_name AS most_bought_product,
-                    SUM(oi.quantity) AS most_bought_quantity
-                FROM Orders o
-                JOIN Order_Item oi ON o.order_id = oi.order_id
-                JOIN Inventory i ON oi.product_id = i.product_id
-                WHERE o.order_datetime LIKE ?
-                GROUP BY i.product_name
-                ORDER BY most_bought_quantity DESC
-                LIMIT 1;
-            """;
+            SELECT
+                COUNT(DISTINCT o.order_id) AS total_orders,
+                SUM(oi.quantity * i.sell_price) AS total_amount_spent,
+                i.product_name AS most_bought_product,
+                SUM(oi.quantity) AS most_bought_quantity
+            FROM Orders o
+            JOIN Order_Item oi ON o.order_id = oi.order_id
+            JOIN Inventory i ON oi.product_id = i.product_id
+            WHERE DATE(o.order_datetime) LIKE ?
+            GROUP BY i.product_name
+            ORDER BY most_bought_quantity DESC
+            LIMIT 1;
+        """;
+
 
             try (PreparedStatement statement = connection.prepareStatement(query)) {
                 statement.setString(1, date + "%");
@@ -388,7 +389,7 @@ private void showSalesReport() {
             }
         }
 
-    private void showProfitMarginReport() {
+   private void showProfitMarginReport() {
         // TODO: Profit margins for each menu item within a given day, month, or year
 
         boolean programRun = true;
@@ -415,33 +416,36 @@ private void showSalesReport() {
                         date = String.format("%s-%s-%s",
                                 year == 0 ? "%" : String.format("%04d", year),
                                 month == 0 ? "%" : String.format("%02d", month),
-                                day == 0 ? "%" : String.format("%02d", day));
+                                day == 0 ? "%" : String.format("%02d%%", day));
                         displayDate = String.format("%s-%s-%s",
                                 year == 0 ? "XXXX" : String.format("%04d", year),
                                 month == 0 ? "XX" : String.format("%02d", month),
-                                day == 0 ? "XX" : String.format("%02d", day));
+                                day == 0 ? "XX" : String.format("%02d%%", day));
                     }
                     validInputs = true;
                 }
 
-                String query = "SELECT " +
-                        "    i.product_id, " +
-                        "    o.order_id, " +
-                        "    COUNT(*) AS total_orders_with_item, " +
-                        "    SUM(oi.quantity) AS total_amount_ordered, " +
-                        "    SUM(oi.quantity) * i.sell_price AS total_revenue, " +
-                        "    SUM(oi.quantity) * i.make_price AS total_cost, " +
-                        "    (SUM(oi.quantity) * i.sell_price) - (SUM(oi.quantity) * i.make_price) AS total_profit, " +
-                        "    o.order_datetime " +
-                        "FROM Inventory i " +
-                        "   JOIN Order_Item oi ON i.product_id = oi.product_id " +
-                        "   JOIN Orders o ON o.order_id = oi.order_id " +
-                        "WHERE o.order_datetime LIKE ? " +
-                        "GROUP BY i.product_id, o.order_id, o.order_datetime " +
-                        "ORDER BY total_profit DESC;";
+                String query = """
+                SELECT
+                    i.product_id,
+                    o.order_id,
+                    COUNT(*) AS total_orders_with_item, 
+                    SUM(oi.quantity) AS total_amount_ordered, 
+                    SUM(oi.quantity) * i.sell_price AS total_revenue, 
+                    SUM(oi.quantity) * i.make_price AS total_cost, 
+                    (SUM(oi.quantity) * i.sell_price) - (SUM(oi.quantity) * i.make_price) AS total_profit, 
+                    o.order_datetime 
+                FROM Inventory i 
+                JOIN Order_Item oi ON i.product_id = oi.product_id 
+                JOIN Orders o ON o.order_id = oi.order_id 
+                WHERE DATE(o.order_datetime) LIKE ? 
+                GROUP BY i.product_id, o.order_id, o.order_datetime 
+                ORDER BY total_profit DESC;
+                """;
+
 
                 try (PreparedStatement statement = connection.prepareStatement(query)) {
-                    statement.setString(1, date + "%");
+                    statement.setString(1, date);
 
                     try (ResultSet result = statement.executeQuery()) {
                         System.out.println("\nProfit Margin Report for " + displayDate + " (sorted by profit):");
