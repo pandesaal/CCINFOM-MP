@@ -90,8 +90,8 @@ VALUES 	('Pork Sinigang', 'Main Course', 170.00, 250.00, 50, 1),
 
 CREATE TABLE IF NOT EXISTS Customers (
     customer_id INT AUTO_INCREMENT PRIMARY KEY,
-    lastname VARCHAR(50) NOT NULL,
-    firstname VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE KEY,
     phonenumber VARCHAR(20) NOT NULL UNIQUE KEY,
     address VARCHAR(200) NOT NULL
@@ -109,19 +109,27 @@ VALUES
 CREATE TABLE IF NOT EXISTS Orders (
     order_id INT AUTO_INCREMENT PRIMARY KEY,
     customer_id INT NOT NULL,
-    total_amount DECIMAL(10, 2),
     order_type ENUM('Dine-In', 'Takeout', 'Delivery') NOT NULL,
     order_status ENUM('In Progress', 'Ready', 'Served', 'Completed') NOT NULL,
     order_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (customer_id) REFERENCES Customers(customer_id)
 );
 
-INSERT INTO Orders (customer_id, total_amount, order_type, order_status)
-VALUES 	(101, 495.00, 'Dine-In', 'In Progress'),
-		(102, 570.00, 'Takeout', 'Ready'),
-		(103, 480.00, 'Delivery', 'Served'),
-		(104, 530.00, 'Dine-In', 'Completed'),
-		(105, 425.00, 'Takeout', 'In Progress');
+CREATE TABLE IF NOT EXISTS Payment (
+    payment_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    amount_paid DECIMAL(10, 2) NOT NULL CHECK (amount_paid >= 0),
+    payment_method ENUM('Cash', 'Credit Card') NOT NULL,
+    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES Orders(order_id)
+);
+
+INSERT INTO Orders (customer_id, order_type, order_status)
+VALUES 	(101,'Dine-In', 'In Progress'),
+		(102, 'Takeout', 'Ready'),
+		(103, 'Delivery', 'Served'),
+		(104, 'Dine-In', 'Completed'),
+		(105, 'Takeout', 'In Progress');
         
 CREATE TABLE IF NOT EXISTS Order_History (
     order_id INT NOT NULL,

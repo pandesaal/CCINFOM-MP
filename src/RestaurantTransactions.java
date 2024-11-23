@@ -69,7 +69,7 @@ public class RestaurantTransactions {
         while (programRun) {
 
         try {
-            String showCustomersQuery = "SELECT customer_id, firstname, lastname FROM Customers";
+            String showCustomersQuery = "SELECT customer_id, first_name, last_name FROM Customers";
             try (PreparedStatement stmt = connection.prepareStatement(showCustomersQuery);
                 ResultSet rs = stmt.executeQuery()) {
                 List<List<Object>> rowsCustomer = new ArrayList<>();
@@ -77,8 +77,8 @@ public class RestaurantTransactions {
                 System.out.println("Current customers in the database:");
                 while (rs.next()) {
                     int customerId = rs.getInt("customer_id");
-                    String firstName = rs.getString("firstname");
-                    String lastName = rs.getString("lastname");
+                    String firstName = rs.getString("first_name");
+                    String lastName = rs.getString("last_name");
                 
                     rowsCustomer.add(List.of(customerId, firstName, lastName));
                     System.out.printf("[%d] %s %s\n", customerId, firstName, lastName);
@@ -115,7 +115,7 @@ public class RestaurantTransactions {
                 String customerAddress = Utilities.getStringInput("Enter address: ");
 
                 // Insert new customer into database
-                String insertCustomerQuery = "INSERT INTO Customers (lastname, firstname, email, phonenumber, address) VALUES (?, ?, ?, ?, ?)";
+                String insertCustomerQuery = "INSERT INTO Customers (last_name, first_name, email, phonenumber, address) VALUES (?, ?, ?, ?, ?)";
                 try (PreparedStatement insertCustomerPstmt = connection.prepareStatement(insertCustomerQuery)) {
                     insertCustomerPstmt.setString(1, customerLastName);
                     insertCustomerPstmt.setString(2, customerFirstName);
@@ -238,6 +238,7 @@ public class RestaurantTransactions {
                                     INSERT INTO Orders (customer_id, order_datetime, order_type, order_status)
                                     VALUES (?, ?, ?, ?);
                                     """;
+                            int orderId = -1; // variable to store the generated order_id
                             try (PreparedStatement orderPstmt = connection.prepareStatement(query)) {
                                 orderPstmt.setInt(1, customerId);
                                 orderPstmt.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
@@ -245,8 +246,27 @@ public class RestaurantTransactions {
                                 orderPstmt.setString(4, "In Progress");
 
                                 orderPstmt.executeUpdate();
+
+                                // Retrieve the generated order_id
+                                try (ResultSet generatedKeys = orderPstmt.getGeneratedKeys()) {
+                                    if (generatedKeys.next()) {
+                                        orderId = generatedKeys.getInt(1);
+                                    }
+                                }
                             }
 
+                            query = """
+                                    INSERT INTO Order_Item (order_id, product_id, quantity)
+                                    VALUES (?, ?, ?);
+                                    """;
+                            try (PreparedStatement orderItemPstmt = connection.prepareStatement(query)) {
+                                orderItemPstmt.setInt(1, orderId); // Use the generated order_id
+                                orderItemPstmt.setInt(2, productID); // Use the selected product_id
+                                orderItemPstmt.setInt(3, orderQty); // Use the ordered quantity
+
+                                orderItemPstmt.executeUpdate();
+                            }
+                            
                             for (int employeeID : employeesAssigned) {
                                 query = """
                                     INSERT INTO Assigned_Employee_to_Order (order_id, employee_id)
@@ -399,8 +419,17 @@ public class RestaurantTransactions {
 
     while (programRun) {
         try {
-            String query = "SELECT order_id, customer_id, total_amount, payment_status " +
-                           "FROM Orders WHERE payment_status = 'Unpaid'";
+            String query = """
+                SELECT o.order_id, o.customer_id, 
+                       SUM(oi.quantity * i.sell_price) AS total_amount,
+                       o.payment_status
+                FROM Orders o
+                JOIN Order_Item oi ON o.order_id = oi.order_id
+                JOIN Inventory i ON oi.product_id = i.product_id
+                WHERE o.payment_status = 'Unpaid'
+                GROUP BY o.order_id, o.customer_id, o.payment_status;
+            """;
+
             List<List<Object>> orders = new ArrayList<>();
             try (PreparedStatement preparedStatement = connection.prepareStatement(query);
                  ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -519,6 +548,7 @@ public class RestaurantTransactions {
         }
     }
 }
+
 
     private void assignShift() {
     boolean programRun = true;

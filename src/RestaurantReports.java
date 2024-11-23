@@ -324,14 +324,17 @@ public class RestaurantReports {
                         e.employee_id,
                         e.first_name,
                         e.last_name,
-                        COUNT(a.order_id) AS num_of_shifts,
-                         SUM(
-                              CASE
-                                  WHEN ts.time_end < ts.time_start THEN TIMESTAMPDIFF(HOUR, ts.time_start, '24:00:00')
-                                                 + TIMESTAMPDIFF(HOUR, '00:00:00', ts.time_end)
-                                            ELSE TIMESTAMPDIFF(HOUR, ts.time_start, ts.time_end)
+                           COUNT(a.order_id) AS num_of_shifts,
+                                SUM(
+                                    TIMESTAMPDIFF(
+                                        HOUR,
+                                        ts.time_start,
+                                        CASE
+                                            WHEN ts.time_end < ts.time_start THEN ADDTIME(ts.time_end, '24:00:00')
+                                            ELSE ts.time_end
                                         END
-                                    ) AS total_hours_worked
+                                    )
+                                ) AS total_hours_worked
                     FROM
                         Employee e
                     JOIN
