@@ -151,11 +151,12 @@ public class RestaurantRecordsMgt {
         }
     }
 
-    private void viewCustomer() {
+    
+private void viewCustomer() {
     boolean programRun = true;
 
     while (programRun) {
-        String query = "SELECT customer_id, firstname, lastname FROM Customers;";
+        String query = "SELECT customer_id, first_name, last_name FROM Customers;";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query);
              ResultSet resultSet = pstmt.executeQuery()) {
@@ -172,7 +173,7 @@ public class RestaurantRecordsMgt {
             while (resultSet.next()) {
                 hasCustomers = true;
                 int id = resultSet.getInt("customer_id");
-                String name = resultSet.getString("firstname") + " " + resultSet.getString("lastname");
+                String name = resultSet.getString("first_name") + " " + resultSet.getString("last_name");
 
                 customerIds.add(id);
                 System.out.printf("%-10d %-20s\n", id, name);
@@ -191,11 +192,31 @@ public class RestaurantRecordsMgt {
                     int id = Utilities.getUserInput("Enter Customer ID to view: ");
 
                     if (customerIds.contains(id)) {
+                        query = "SELECT * FROM Customers WHERE customer_id = ?;";
+
+                        try (PreparedStatement customerStmt = connection.prepareStatement(query)) {
+                            customerStmt.setInt(1, id);
+
+                            try (ResultSet customerDetails = customerStmt.executeQuery()) {
+                                if (customerDetails.next()) {
+                                    System.out.println("\nCustomer Details:");
+                                    System.out.println("-".repeat(50));
+                                    System.out.printf("ID: %d\n", customerDetails.getInt("customer_id"));
+                                    System.out.printf("Name: %s %s\n",
+                                            customerDetails.getString("first_name"),
+                                            customerDetails.getString("last_name"));
+                                    System.out.printf("Email: %s\n", customerDetails.getString("email"));
+                                    System.out.printf("Phone: %s\n", customerDetails.getString("phonenumber"));
+                                    System.out.printf("Address: %s\n", customerDetails.getString("address"));
+                                    System.out.println("-".repeat(50));
+                                }
+                            }
+                        }
+
                         query = """
-                                SELECT c.firstname, c.lastname, o.order_id, o.order_type, o.order_datetime
-                                FROM Customers c
-                                JOIN Orders o ON c.customer_id = o.customer_id
-                                WHERE c.customer_id = ?
+                                SELECT o.order_id, o.order_type, o.order_datetime
+                                FROM Orders o
+                                WHERE o.customer_id = ?
                                 ORDER BY o.order_datetime DESC;
                                 """;
 
@@ -203,7 +224,7 @@ public class RestaurantRecordsMgt {
                             detailStmt.setInt(1, id);
 
                             try (ResultSet detailResult = detailStmt.executeQuery()) {
-                                System.out.println("\nOrder History for Customer ID: " + id);
+                                System.out.println("\nOrder History:");
                                 System.out.println("-".repeat(70));
                                 System.out.printf("%-10s %-15s %-20s\n", "Order ID", "Order Type", "Order Date");
                                 System.out.println("-".repeat(70));
@@ -257,6 +278,7 @@ public class RestaurantRecordsMgt {
         }
     }
 }
+
 
         private void viewEmployee() {
         boolean programRun = true;
