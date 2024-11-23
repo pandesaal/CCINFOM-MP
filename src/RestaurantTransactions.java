@@ -530,29 +530,6 @@ public class RestaurantTransactions {
 }
 
 
-        boolean validChoice = false;
-        while (!validChoice) {
-            try {
-                int choice = Utilities.getUserInput("Process another payment? (1 - Yes, 2 - No): ");
-                switch (choice) {
-                    case 1:
-                        validChoice = true;
-                        break;
-                    case 2:
-                        System.out.println("Exiting process payment menu...");
-                        programRun = false;
-                        validChoice = true;
-                        break;
-                    default:
-                        System.out.println("Invalid choice. Please enter 1 or 2.");
-                }
-            } catch (InputMismatchException e) {
-                System.out.println("Invalid input. Please try again.");
-            }
-        }
-    }
-}
-
     private void assignShift() {
     boolean programRun = true;
 
