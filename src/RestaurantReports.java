@@ -213,7 +213,7 @@ public class RestaurantReports {
                     int year = Utilities.getUserInput("Enter year (0 to skip): ");
 
                     if (day < 0 || month < 0 || year < 0) throw new InputMismatchException();
-                    if (day != 0 && month != 0 && year != 0) { //iIf complete date is provided
+                    if (day != 0 && month != 0 && year != 0) { // if complete date is provided
                         date = Date.valueOf(String.format("%d-%02d-%02d", year, month, day)).toString();
                     } else { // partial date filter
                         String yearStr = year == 0 ? "%" : String.format("%04d", year);
@@ -226,77 +226,68 @@ public class RestaurantReports {
                 }
 
                 String query = """
-                        SELECT\s
-                            CONCAT(c.firstname, ' ', c.lastname) AS customer_name,
-                            o.order_id,
-                            o.order_datetime,
-                            i.product_name,
-                            oi.quantity,
-                            (oi.quantity * i.sell_price) AS total_price
-                        FROM Orders o
-                        JOIN Customers c ON o.customer_id = c.customer_id
-                        JOIN Order_Item oi ON o.order_id = oi.order_id
-                        JOIN Inventory i ON oi.product_id = i.product_id
-                        WHERE o.order_datetime LIKE ?
-                        ORDER BY o.order_datetime DESC;
-                       \s""";
+                    SELECT 
+                        COUNT(DISTINCT o.order_id) AS total_orders,
+                        SUM(oi.quantity * i.sell_price) AS total_amount_spent,
+                        i.product_name AS most_bought_product,
+                        SUM(oi.quantity) AS most_bought_quantity
+                    FROM Orders o
+                    JOIN Order_Item oi ON o.order_id = oi.order_id
+                    JOIN Inventory i ON oi.product_id = i.product_id
+                    WHERE o.order_datetime LIKE ?
+                    GROUP BY i.product_name
+                    ORDER BY most_bought_quantity DESC
+                    LIMIT 1;
+                    """;
 
                 try (PreparedStatement statement = connection.prepareStatement(query)) {
-                    statement.setString(1, date + "%");
+                statement.setString(1, dateFilter + "%");
 
-                    try (ResultSet resultSet = statement.executeQuery()) {
-                        System.out.println("\nCustomer Order Report:");
-                        System.out.println("-".repeat(100));
-                        System.out.printf("%-25s %-10s %-30s %-20s %-10s %-10s\n",
-                                "Customer Name", "Order ID", "Order Timestamp", "Product", "Quantity", "Total Price");
-                        System.out.println("-".repeat(100));
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    System.out.println("\nCustomer Order Report:");
+                    System.out.println("-".repeat(60));
 
-                        boolean hasRecords = false;
+                    if (resultSet.next()) {
+                        int totalOrders = resultSet.getInt("total_orders");
+                        double totalAmountSpent = resultSet.getDouble("total_amount_spent");
+                        String mostBoughtProduct = resultSet.getString("most_bought_product");
+                        int mostBoughtQuantity = resultSet.getInt("most_bought_quantity");
 
-                        while (resultSet.next()) {
-                            hasRecords = true;
-
-                            String customerName = resultSet.getString("customer_name");
-                            int orderId = resultSet.getInt("order_id");
-                            Timestamp orderDateTime = resultSet.getTimestamp("order_datetime");
-                            String productName = resultSet.getString("product_name");
-                            int quantity = resultSet.getInt("quantity");
-                            double totalPrice = resultSet.getDouble("total_price");
-
-                            System.out.printf("%-25s %-10d %-30s %-20s %-10d %-10.2f\n",
-                                    customerName, orderId, orderDateTime.toString(), productName, quantity, totalPrice);
-                        }
-
-                        if (!hasRecords)
-                            System.out.println("No orders found for the specified date.");
-
-                        System.out.println("-".repeat(100));
+                        System.out.printf("Total Orders: %d\n", totalOrders);
+                        System.out.printf("Total Amount Spent: %.2f\n", totalAmountSpent);
+                        System.out.printf("Most Bought Product: %s (%d units)\n",
+                                mostBoughtProduct, mostBoughtQuantity);
+                    } else {
+                        System.out.println("No orders found for the specified date.");
                     }
+
+                    System.out.println("-".repeat(60));
                 }
-            } catch (SQLException e) {
-                System.out.println("Query error: " + e.getMessage());
-            } catch (InputMismatchException e) {
-                System.out.println("Invalid input. Please enter valid numeric values.");
-            } catch (IllegalArgumentException e) {
-                System.out.println("Date entered is not valid. Please try again.");
             }
+        } catch (SQLException e) {
+            System.out.println("Query error: " + e.getMessage());
+        } catch (InputMismatchException e) {
+            System.out.println("Invalid input. Please enter valid numeric values.");
+        } catch (IllegalArgumentException e) {
+            System.out.println("Date entered is not valid. Please try again.");
+        }
 
-            boolean validChoice = false;
-            while (!validChoice) {
-                int choice = Utilities.getUserInput("Continue viewing customer order report? (1 - Yes, 2 - No): ");
-                switch (choice) {
-                    case 1 -> validChoice = true;
-                    case 2 -> {
-                        System.out.println("Exiting customer order report menu...");
-                        programRun = false;
-                        validChoice = true;
-                    }
-                    default -> System.out.println("Invalid choice. Please enter 1 or 2.");
+        boolean validChoice = false;
+        while (!validChoice) {
+            int choice = Utilities.getUserInput("Continue viewing customer order report? (1 - Yes, 2 - No): ");
+            switch (choice) {
+                case 1 -> validChoice = true;
+                case 2 -> {
+                    System.out.println("Exiting customer order report menu...");
+                    programRun = false;
+                    validChoice = true;
                 }
+                default -> System.out.println("Invalid choice. Please enter 1 or 2.");
             }
         }
     }
-
+}
+    
     private void showEmployeeShiftReport() {
         //TODO: Number of shifts per employee and total hours worked within a given year and month.
             boolean programRun = true;
