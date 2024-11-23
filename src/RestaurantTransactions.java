@@ -238,6 +238,7 @@ public class RestaurantTransactions {
                                     INSERT INTO Orders (customer_id, order_datetime, order_type, order_status)
                                     VALUES (?, ?, ?, ?);
                                     """;
+                            int orderId = -1; // variable to store the generated order_id
                             try (PreparedStatement orderPstmt = connection.prepareStatement(query)) {
                                 orderPstmt.setInt(1, customerId);
                                 orderPstmt.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
@@ -245,8 +246,27 @@ public class RestaurantTransactions {
                                 orderPstmt.setString(4, "In Progress");
 
                                 orderPstmt.executeUpdate();
+
+                                // Retrieve the generated order_id
+                                try (ResultSet generatedKeys = orderPstmt.getGeneratedKeys()) {
+                                    if (generatedKeys.next()) {
+                                        orderId = generatedKeys.getInt(1);
+                                    }
+                                }
                             }
 
+                            query = """
+                                    INSERT INTO Order_Item (order_id, product_id, quantity)
+                                    VALUES (?, ?, ?);
+                                    """;
+                            try (PreparedStatement orderItemPstmt = connection.prepareStatement(query)) {
+                                orderItemPstmt.setInt(1, orderId); // Use the generated order_id
+                                orderItemPstmt.setInt(2, productID); // Use the selected product_id
+                                orderItemPstmt.setInt(3, orderQty); // Use the ordered quantity
+
+                                orderItemPstmt.executeUpdate();
+                            }
+                            
                             for (int employeeID : employeesAssigned) {
                                 query = """
                                     INSERT INTO Assigned_Employee_to_Order (order_id, employee_id)
