@@ -56,11 +56,11 @@ public class Utilities {
     public static void removeEmployeeFromShift(Connection connection) {
         try {
             String query = """
-                    SELECT e.employee_id, e.first_name, e.last_name, ts.shift_type
-                    FROM Employee e
-                    JOIN TimeShift ts ON e.time_shiftid = ts.time_shiftid
-                    ORDER BY e.employee_id;
-                    """;
+                SELECT e.employee_id, e.first_name, e.last_name, ts.shift_type
+                FROM Employee e
+                JOIN TimeShift ts ON e.time_shiftid = ts.time_shiftid
+                ORDER BY e.employee_id;
+                """;
 
             List<List<Object>> employeesWithShift = new ArrayList<>();
             try (PreparedStatement preparedStatement = connection.prepareStatement(query);
@@ -84,12 +84,39 @@ public class Utilities {
                 }
             }
 
-            int selectedEmployeeId = Utilities.getUserInput("Enter the Employee ID to remove their shift: ");
-            if (selectedEmployeeId == 0) {
-                System.out.println("Canceling shift removal...");
+            boolean validInput = false;
+            int selectedEmployeeId = -1;
+
+            // Ensure the user inputs a valid Employee ID
+            while (!validInput) {
+                selectedEmployeeId = Utilities.getUserInput("Enter the Employee ID to remove their shift: ");
+                if (selectedEmployeeId == 0) {
+                    System.out.println("Canceling shift removal...");
+                    return;
+                }
+
+                // Check if the inputted ID exists in the list of employees with shifts
+                for (List<Object> employee : employeesWithShift) {
+                    if ((int) employee.get(0) == selectedEmployeeId) {
+                        validInput = true;
+                        break;
+                    }
+                }
+
+                if (!validInput) {
+                    System.out.println("Invalid Employee ID. Please try again.");
+                }
+            }
+
+            // Confirm the shift removal
+            System.out.println("Are you sure you want to remove this employee's shift?");
+            int confirmation = Utilities.getUserInput("Confirm (1 - Yes, 2 - No): ");
+            if (confirmation != 1) {
+                System.out.println("Shift removal canceled.");
                 return;
             }
 
+            // Remove the shift from the employee
             String updateQuery = "UPDATE Employee SET time_shiftid = NULL WHERE employee_id = ?";
             try (PreparedStatement updateStmt = connection.prepareStatement(updateQuery)) {
                 updateStmt.setInt(1, selectedEmployeeId);
@@ -208,8 +235,16 @@ public class Utilities {
         }
     }
 
-    public static void emptyAllShifts(Connection connection) {
+   public static void emptyAllShifts(Connection connection) {
         try {
+            // Confirm before clearing all shifts
+            System.out.println("Are you sure you want to remove all shifts for all employees?");
+            int confirmation = Utilities.getUserInput("Confirm (1 - Yes, 2 - No): ");
+            if (confirmation != 1) {
+                System.out.println("Action canceled. No shifts were removed.");
+                return;
+            }
+
             String query = "UPDATE Employee SET time_shiftid = NULL";
             try (PreparedStatement updateStmt = connection.prepareStatement(query)) {
                 int rowsAffected = updateStmt.executeUpdate();
@@ -219,6 +254,7 @@ public class Utilities {
             System.out.println("Database error: " + e.getMessage());
         }
     }
+
 
 
 }
